@@ -1,0 +1,27 @@
+# Secrets and credentials
+.env
+.env.*
+*.pem
+*.key
+.mcp.json
+
+# Claude Code local settings and session data
+.claude/settings.local.json
+.claude/sessions/
+.claude/projects/
+
+# Dependencies
+node_modules/
+
+# OS and editor junk
+.DS_Store
+Thumbs.db
+*.swp
+
+# Logs, output, and generated files
+*.log
+logs/
+out/
+output/
+*.pptx
+*.tmp

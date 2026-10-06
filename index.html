@@ -1,0 +1,1755 @@
+<meta charset="utf-8">
+<title>Futures Compass</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,340..480;0,9..144,600..700;1,9..144,400..560&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --ground:#E2E7DF;
+    --surface:#F4F6EF;
+    --surface-2:#EAEEE3;
+    --field:#FFFFFF;
+    --border:#A9B49C;
+    --ink:#182027;
+    --ink-soft:#3E4A45;
+    --muted:#5E6E67;
+    --brass:#A9702A;
+    --brass-soft:#E8D3AF;
+    --teal:#285C63;
+    --teal-soft:#C9DEDC;
+    --moss:#3C6B49;
+    --moss-soft:#CFE0CE;
+    --vermilion:#9C4030;
+    --vermilion-soft:#ECD3CB;
+    --font-display:'Fraunces', Georgia, 'Times New Roman', serif;
+    --font-body:'Archivo', -apple-system, 'Segoe UI', sans-serif;
+    --font-mono:'IBM Plex Mono', 'SF Mono', Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#10161A; --surface:#171E22; --surface-2:#1D262A; --field:#0C1113; --border:#4A5A5F;
+      --ink:#E7ECE8; --ink-soft:#C7D0CB; --muted:#93A29A;
+      --brass:#D3924C; --brass-soft:#4A3A24;
+      --teal:#5FA6AC; --teal-soft:#1E3A3C;
+      --moss:#7CB489; --moss-soft:#223A29;
+      --vermilion:#D97C68; --vermilion-soft:#3D231E;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#10161A; --surface:#171E22; --surface-2:#1D262A; --field:#0C1113; --border:#4A5A5F;
+    --ink:#E7ECE8; --ink-soft:#C7D0CB; --muted:#93A29A;
+    --brass:#D3924C; --brass-soft:#4A3A24;
+    --teal:#5FA6AC; --teal-soft:#1E3A3C;
+    --moss:#7CB489; --moss-soft:#223A29;
+    --vermilion:#D97C68; --vermilion-soft:#3D231E;
+  }
+  *{box-sizing:border-box;}
+  body{background:var(--ground);}
+  .app{max-width:1180px; margin:0 auto; padding:30px 24px 56px; font-family:var(--font-body); color:var(--ink); background:var(--ground);}
+  h1,h2,h3,h4,h5{text-wrap:balance;}
+  p{max-width:70ch;}
+  ::selection{background:var(--brass-soft);}
+
+  .topbar{display:flex; justify-content:space-between; gap:20px; align-items:flex-start; padding-bottom:20px; border-bottom:1px solid var(--border);}
+  .brand{display:flex; gap:14px; align-items:flex-start;}
+  .brand-mark{font-size:1.7rem; color:var(--brass); line-height:1.1; font-family:var(--font-display);}
+  h1{font-family:var(--font-display); font-style:italic; font-weight:600; font-size:1.85rem; margin:0;}
+  .tagline{margin:5px 0 0; color:var(--muted); font-size:.92rem; max-width:48ch; line-height:1.45;}
+  .ai-note{font-size:.76rem; line-height:1.4; color:var(--vermilion); background:var(--vermilion-soft); padding:8px 12px; border-radius:7px; max-width:230px;}
+
+  .course{display:flex; align-items:flex-start; margin:26px 0 4px;}
+  .stop{display:flex; flex-direction:column; align-items:center; gap:6px; background:none; border:none; cursor:pointer; font-family:var(--font-body); color:var(--muted); padding:2px 12px;}
+  .stop:disabled{cursor:not-allowed; opacity:.45;}
+  .stop-num{font-family:var(--font-mono); font-size:.66rem; letter-spacing:.06em;}
+  .stop-dot{width:12px; height:12px; border-radius:50%; border:2px solid var(--border); background:var(--surface);}
+  .stop.is-reached .stop-dot{border-color:var(--brass); background:var(--brass-soft);}
+  .stop.is-current .stop-dot{border-color:var(--brass); background:var(--brass); box-shadow:0 0 0 4px var(--brass-soft);}
+  .stop.is-current{color:var(--ink); font-weight:600;}
+  .stop-label{font-size:.82rem;}
+  .stop-time{font-family:var(--font-mono); font-size:.62rem; color:var(--muted); opacity:.85;}
+  .course-line{flex:1; height:1px; background:var(--border); margin-top:15px;}
+
+  .wire{margin:16px 0 0; padding:12px 14px; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; display:flex; gap:12px; align-items:flex-start;}
+  .wire[hidden]{display:none !important;}
+  .wire-body{flex:1; min-width:0;}
+  .wire-label{font-family:var(--font-mono); font-size:.68rem; text-transform:uppercase; letter-spacing:.08em; color:var(--brass); display:block; margin-bottom:4px;}
+  .wire pre{margin:0; font-family:var(--font-mono); font-size:.76rem; color:var(--muted); white-space:pre-wrap; max-height:4.6em; overflow:hidden;}
+
+  .deck{display:grid; grid-template-columns:1fr 320px; gap:26px; align-items:start; margin-top:22px;}
+  @media (max-width:880px){.deck{grid-template-columns:1fr;}}
+  .canvas{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:28px; min-height:320px;}
+  .rail{position:sticky; top:20px; display:flex; flex-direction:column; gap:16px;}
+  .rail-block{background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:16px;}
+  .rail-block h3{font-family:var(--font-mono); font-size:.7rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:0 0 10px;}
+  .log-item{font-size:.84rem; margin:0 0 8px; padding-bottom:8px; border-bottom:1px dashed var(--border); line-height:1.4;}
+  .log-item:last-child{border:none; margin:0; padding:0;}
+  .log-item b{display:block; font-size:.68rem; text-transform:uppercase; letter-spacing:.05em; color:var(--teal); margin-bottom:2px; font-weight:600;}
+  .log-empty{font-size:.82rem; color:var(--muted); font-style:italic;}
+
+  textarea, input[type=text]{width:100%; font-family:var(--font-body); font-size:.92rem; padding:10px 12px; border:1.5px solid var(--border); border-radius:7px; background:var(--field); color:var(--ink); box-shadow:inset 0 1px 3px rgba(0,0,0,.06);}
+  textarea{resize:vertical; line-height:1.45;}
+  textarea:hover, input[type=text]:hover{border-color:var(--brass);}
+  textarea:focus, input:focus{outline:2px solid var(--teal); outline-offset:1px; border-color:var(--teal);}
+  .field{margin-bottom:16px;}
+  .field label{display:block; font-family:var(--font-mono); font-size:.68rem; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-bottom:6px;}
+
+  button.btn{font-family:var(--font-body); font-weight:600; font-size:.87rem; padding:10px 16px; border-radius:7px; border:1px solid var(--brass); background:var(--brass); color:#fff; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,.18);}
+  button.btn:hover:not(:disabled){box-shadow:0 2px 5px rgba(0,0,0,.22); transform:translateY(-1px);}
+  button.btn:hover:not(:disabled){filter:brightness(1.07);}
+  button.btn:disabled{opacity:.4; cursor:not-allowed;}
+  button.btn.secondary{background:transparent; color:var(--brass);}
+  button.btn.ghost{background:transparent; color:var(--muted); border-color:var(--border);}
+  button.btn.small{padding:6px 11px; font-size:.78rem;}
+  button:focus-visible, .stop:focus-visible, .axis-star:focus-visible{outline:2px solid var(--teal); outline-offset:2px;}
+  button.linklike{background:none; border:none; color:var(--teal); text-decoration:underline; cursor:pointer; font-size:.85rem; font-family:var(--font-body); padding:0;}
+
+  .btn-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;}
+  .example-badge{display:inline-block; font-family:var(--font-mono); font-size:.66rem; text-transform:uppercase; letter-spacing:.06em; color:var(--teal); background:var(--teal-soft); padding:3px 9px; border-radius:5px; margin-bottom:12px;}
+  .hint{font-size:.79rem; color:var(--vermilion); margin-top:6px;}
+  .error-note{font-size:.82rem; color:var(--vermilion); background:var(--vermilion-soft); padding:9px 12px; border-radius:7px; margin:14px 0;}
+  .stale-banner{background:var(--brass-soft); border:1px solid var(--brass); color:var(--brass); padding:10px 14px; border-radius:8px; font-size:.84rem; margin-bottom:18px;}
+
+  .driver-list{display:flex; flex-direction:column; gap:10px; margin-bottom:16px;}
+  .driver-card{background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:14px 16px;}
+  .driver-top{display:flex; justify-content:space-between; gap:12px; align-items:flex-start;}
+  .driver-name{font-weight:600; font-size:.95rem; margin:0 0 3px;}
+  .driver-desc{font-size:.83rem; color:var(--ink-soft); margin:0;}
+  .driver-tools{display:flex; gap:8px; align-items:center; flex-shrink:0;}
+  .axis-star{border:1px solid var(--border); background:var(--surface); border-radius:6px; padding:6px 10px; cursor:pointer; font-size:.76rem; color:var(--muted); font-family:var(--font-body); white-space:nowrap;}
+  .axis-star.is-on{background:var(--brass-soft); border-color:var(--brass); color:var(--brass); font-weight:600;}
+  .remove-x{border:none; background:none; color:var(--muted); cursor:pointer; font-size:1rem; line-height:1; padding:4px;}
+  .slider-group{display:flex; gap:20px; margin-top:12px; flex-wrap:wrap;}
+  .slider-item{display:flex; flex-direction:column; gap:5px; min-width:150px; flex:1;}
+  .slider-item span.lbl{font-family:var(--font-mono); font-size:.66rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); display:flex; justify-content:space-between;}
+  .slider-item.impact .readout{color:var(--brass); font-weight:600;}
+  .slider-item.uncertainty .readout{color:var(--teal); font-weight:600;}
+  input[type=range]{width:100%; accent-color:var(--brass);}
+  .slider-item.uncertainty input[type=range]{accent-color:var(--teal);}
+  .add-driver-form{display:grid; grid-template-columns:1fr 1.4fr auto; gap:8px; align-items:end; margin-bottom:18px;}
+  @media (max-width:640px){.add-driver-form{grid-template-columns:1fr;}}
+
+  .matrix{display:grid; grid-template-columns:34px 130px 1fr 1fr; grid-template-rows:auto auto 1fr 1fr; gap:10px; margin-bottom:18px;}
+  .axis-name-top{grid-column:3/5; text-align:center; font-family:var(--font-mono); font-size:.68rem; color:var(--brass); text-transform:uppercase; letter-spacing:.08em;}
+  .axis-label-top{font-family:var(--font-mono); font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); display:flex; align-items:center; justify-content:center; text-align:center; padding:4px;}
+  .axis-name-side{grid-row:3/5; writing-mode:vertical-rl; transform:rotate(180deg); font-family:var(--font-mono); font-size:.68rem; color:var(--teal); text-transform:uppercase; letter-spacing:.08em; display:flex; align-items:center; justify-content:center;}
+  .axis-label-side{writing-mode:vertical-rl; transform:rotate(180deg); font-family:var(--font-mono); font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); display:flex; align-items:center; justify-content:center; text-align:center;}
+  .quad-card{background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:16px;}
+  .quad-card h4{font-family:var(--font-display); font-style:italic; font-weight:600; font-size:1.14rem; margin:0 0 8px;}
+  .quad-card p{font-size:.88rem; line-height:1.55; color:var(--ink-soft); margin:0 0 10px;}
+  .signals{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;}
+  .signal-tag{font-family:var(--font-mono); font-size:.66rem; background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:3px 9px; color:var(--muted);}
+  .card-actions{display:flex; gap:8px; flex-wrap:wrap;}
+  .critique{margin-top:12px; padding:10px 12px; background:var(--vermilion-soft); border-left:3px solid var(--vermilion); border-radius:0 6px 6px 0; font-size:.83rem; color:var(--ink);}
+  .critique b{display:block; font-family:var(--font-mono); font-size:.66rem; text-transform:uppercase; color:var(--vermilion); margin-bottom:4px; letter-spacing:.05em;}
+  .pending-note{font-family:var(--font-mono); font-size:.76rem; color:var(--muted); font-style:italic;}
+
+  .concept-group{margin-bottom:26px;}
+  .concept-group h4{font-family:var(--font-display); font-style:italic; font-size:1.05rem; margin:0 0 12px; color:var(--ink);}
+  .concept-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px;}
+  .concept-card{background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:14px;}
+  .concept-card.is-shortlisted{border-color:var(--brass); box-shadow:0 0 0 1px var(--brass);}
+  .concept-card h5{margin:0 0 6px; font-size:.94rem;}
+  .concept-card p{font-size:.83rem; color:var(--ink-soft); margin:0 0 8px; line-height:1.45;}
+  .concept-card .why{font-size:.76rem; color:var(--muted); font-style:italic; margin:0;}
+  .shortlist-toggle{display:flex; align-items:center; gap:7px; margin-top:11px; font-size:.78rem; color:var(--ink-soft);}
+
+  .board{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:26px;}
+  @media (max-width:760px){.board{grid-template-columns:1fr 1fr;}}
+  .bucket{border-radius:10px; padding:14px; border:1px solid var(--border); background:var(--surface-2); border-top-width:4px;}
+  .bucket h4{font-family:var(--font-mono); font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; margin:0 0 4px;}
+  .bucket .bucket-sub{font-size:.72rem; color:var(--muted); margin:0 0 10px;}
+  .bucket.no-regrets{border-top-color:var(--moss);}
+  .bucket.option{border-top-color:var(--teal);}
+  .bucket.hedge{border-top-color:var(--brass);}
+  .bucket.big-bet{border-top-color:var(--vermilion);}
+  .chip{background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:9px 10px; font-size:.79rem; margin-bottom:8px;}
+  .chip b{display:block; margin-bottom:3px;}
+  .chip .rationale{color:var(--muted); font-size:.74rem; line-height:1.35;}
+
+  .threads-list, .tripwire-list{display:flex; flex-direction:column; gap:10px; margin-bottom:8px;}
+  .thread-item, .tripwire-item{background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:12px 14px; font-size:.85rem;}
+  .thread-item b, .tripwire-item b{font-size:.9rem;}
+  .tripwire-item .guess{font-family:var(--font-mono); font-size:.73rem; color:var(--teal); margin-top:6px; display:block;}
+  .section-heading{font-family:var(--font-display); font-style:italic; font-size:1.3rem; margin:0 0 14px; color:var(--ink);}
+  .subsection-heading{font-family:var(--font-mono); font-size:.72rem; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin:26px 0 12px;}
+
+  .foot{display:flex; justify-content:space-between; align-items:center; margin-top:34px; padding-top:16px; border-top:1px solid var(--border); font-size:.8rem; color:var(--muted); flex-wrap:wrap; gap:10px;}
+
+  .welcome{background:var(--surface-2); border:1px solid var(--brass); border-radius:10px; padding:18px 20px; margin-bottom:22px;}
+  .welcome h3{font-family:var(--font-display); font-style:italic; font-size:1.15rem; margin:0 0 8px; color:var(--ink);}
+  .welcome ol{margin:10px 0 0; padding-left:20px; font-size:.85rem; color:var(--ink-soft); line-height:1.7;}
+  .welcome ol b{color:var(--ink); font-weight:600;}
+  .welcome .time{font-family:var(--font-mono); font-size:.72rem; color:var(--brass);}
+  .welcome-dismiss{margin-top:12px;}
+  .field-error{font-size:.8rem; color:var(--vermilion); margin:-8px 0 14px;}
+
+  .mini{font-size:.78rem; color:var(--muted); line-height:1.45; margin:0 0 10px;}
+  .mini.err{color:var(--vermilion);}
+  .discuss .btn{width:100%;}
+  .discuss .mini:last-child{margin:10px 0 0;}
+  details.transcript{margin-top:14px; border-top:1px dashed var(--border); padding-top:12px;}
+  details.transcript summary{cursor:pointer; font-weight:600; font-size:.85rem; color:var(--teal);}
+  details.transcript[open] summary{margin-bottom:8px;}
+  .file-row{margin:8px 0;}
+  .file-row input[type=file]{font-size:.78rem; width:100%;}
+  .digest{margin-top:14px; padding:12px; background:var(--surface); border:1px solid var(--border); border-radius:8px;}
+  .digest h4{font-family:var(--font-mono); font-size:.66rem; text-transform:uppercase; letter-spacing:.07em; color:var(--teal); margin:10px 0 4px;}
+  .digest h4:first-child{margin-top:0;}
+  .digest ul{margin:0; padding-left:18px; font-size:.8rem; color:var(--ink-soft); line-height:1.5;}
+  .digest .routed{font-size:.76rem; color:var(--brass); margin:10px 0 0; line-height:1.4;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important; animation:none !important;}
+    button.btn:hover:not(:disabled){transform:none;}
+  }
+</style>
+
+<div class="app" id="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">&#10022;</span>
+      <div>
+        <h1>Futures Compass</h1>
+        <p class="tagline">A staged instrument for design-forward scenario planning — Claude does the legwork at each waypoint, you keep the compass and choose what carries forward.</p>
+      </div>
+    </div>
+    <div class="ai-note" id="ai-banner" hidden></div>
+  </header>
+
+  <nav class="course" id="course"></nav>
+  <div class="wire" id="wire" hidden>
+    <div class="wire-body">
+      <span class="wire-label" id="wire-label">Working…</span>
+      <pre id="wire-text"></pre>
+    </div>
+    <button class="btn ghost small" id="wire-stop">Stop</button>
+  </div>
+
+  <main class="deck">
+    <section class="canvas" id="canvas"></section>
+    <aside class="rail" id="rail"></aside>
+  </main>
+
+  <footer class="foot">
+    <span>Reasoning runs on your own Claude usage from inside this page.</span>
+    <button class="linklike" id="reset-btn">Start a new domain</button>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var STAGES = [
+    {key:'domain', label:'Domain', num:'01', time:'~2 min', blurb:'Describe the problem space and horizon yourself.'},
+    {key:'drivers', label:'Drivers', num:'02', time:'~1-2 min', blurb:'Claude researches forces, then you pick two as axes.'},
+    {key:'futures', label:'Futures', num:'03', time:'~1 min', blurb:'Claude drafts four "in a world where..." stories.'},
+    {key:'concepts', label:'Concepts', num:'04', time:'~1 min', blurb:'Claude proposes ideas per future; you shortlist.'},
+    {key:'strategy', label:'Strategy', num:'05', time:'~1 min', blurb:'Claude sorts your picks into a strategy board.'}
+  ];
+  var STORAGE_KEY = 'futures-compass-state-v1';
+
+  var EXAMPLE_PRESET = {
+    problem: "How will restaurant dining experiences evolve as customers' comfort with technology and restaurants' economic pressures both shift?",
+    horizon: "The next two to three years",
+    perspective: "Written from the point of view of a mid-sized restaurant group. We can shape menus, ordering, and service design, but not commercial rents, immigration policy, or the broader economy, even though those forces still bound what's possible."
+  };
+
+  function defaultState(){
+    return {
+      stage: 'domain',
+      reached: {domain:true, drivers:false, futures:false, concepts:false, strategy:false},
+      aiUnavailable: false,
+      aiUnavailableReason: '',
+      busy: false,
+      wireLabel: '',
+      wireText: '',
+      lastError: '',
+      welcomeDismissed: false,
+      isExample: true,
+      domain: {problem: EXAMPLE_PRESET.problem, horizon: EXAMPLE_PRESET.horizon, perspective: EXAMPLE_PRESET.perspective},
+      drivers: {items: [], axisIds: [], notes: '', hint: ''},
+      futures: {axisA: null, axisB: null, quadrants: [], notes: '', stale: false},
+      concepts: {list: [], notes: '', stale: false},
+      strategy: {classification: [], threads: [], tripwires: [], notes: '', stale: false},
+      digests: {},
+      seq: {driver: 1, concept: 1}
+    };
+  }
+
+  var state = loadLocal() || defaultState();
+  if (!state.digests) state.digests = {};
+  // busy/wire fields describe an in-flight Claude call, which cannot survive a page reload —
+  // an old session that closed mid-call must never come back permanently "stuck".
+  state.busy = false; state.wireLabel = ''; state.wireText = ''; state.lastError = '';
+  var sampleApi = null;
+  var downloadsApi = null;
+  var activeController = null;
+  var editingQuadrantId = null;
+
+  function saveLocal(){
+    try{
+      var toSave = JSON.parse(JSON.stringify(state));
+      toSave.busy = false; toSave.wireLabel = ''; toSave.wireText = ''; toSave.lastError = '';
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    }catch(e){}
+  }
+  function loadLocal(){ try{ var raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : null; }catch(e){ return null; } }
+
+  function el(tag, attrs){
+    var node = document.createElement(tag);
+    attrs = attrs || {};
+    for (var k in attrs){
+      if (!Object.prototype.hasOwnProperty.call(attrs, k)) continue;
+      var v = attrs[k];
+      if (k === 'class') node.className = v;
+      else if (k === 'html') node.innerHTML = v;
+      else if (k.indexOf('on') === 0 && typeof v === 'function') node.addEventListener(k.slice(2), v);
+      else if (v !== false && v != null) node.setAttribute(k, v === true ? '' : v);
+    }
+    for (var i = 2; i < arguments.length; i++){
+      var c = arguments[i];
+      if (c == null) continue;
+      if (Array.isArray(c)) { for (var j=0;j<c.length;j++) appendChild(node, c[j]); }
+      else appendChild(node, c);
+    }
+    return node;
+  }
+  function appendChild(node, c){
+    if (c == null) return;
+    node.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  }
+  function clamp15(v){ v = Math.round(Number(v)); if (isNaN(v)) return 3; return Math.max(1, Math.min(5, v)); }
+  function slug(s){ return String(s||'domain').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'').slice(0,40) || 'domain'; }
+  function getDriver(id){ for (var i=0;i<state.drivers.items.length;i++) if (state.drivers.items[i].id===id) return state.drivers.items[i]; return null; }
+  function findQuad(aPole,bPole){ for (var i=0;i<state.futures.quadrants.length;i++){ var q=state.futures.quadrants[i]; if (q.axisAPole===aPole && q.axisBPole===bPole) return q; } return null; }
+  function quadTitleById(id){ for (var i=0;i<state.futures.quadrants.length;i++) if (state.futures.quadrants[i].id===id) return state.futures.quadrants[i].title; return id; }
+
+  function markStale(from){
+    var order = ['drivers','futures','concepts','strategy'];
+    var idx = order.indexOf(from);
+    for (var i=idx+1;i<order.length;i++){
+      var key = order[i];
+      if (key==='futures' && state.futures.quadrants.length) state.futures.stale = true;
+      if (key==='concepts' && state.concepts.list.length) state.concepts.stale = true;
+      if (key==='strategy' && state.strategy.classification.length) state.strategy.stale = true;
+    }
+  }
+
+  // ---------- Claude capability wiring ----------
+  function useCap(name){
+    return Promise.resolve().then(function(){
+      if (!window.claude || typeof window.claude.use !== 'function') return null;
+      return window.claude.use(name);
+    }).catch(function(){ return null; });
+  }
+
+  function callSample(opts){
+    if (!sampleApi){ var e = {code:'not_declared', message:'Sample capability unavailable.'}; return Promise.reject(e); }
+    var callOpts = {signal: opts.signal, cache:false, modelTier: opts.tier || 'default'};
+    if (opts.onStream) callOpts.onText = function(u){ opts.onStream(u.text); };
+    if (opts.asJson) return sampleApi.json(opts.prompt, callOpts);
+    return sampleApi(opts.prompt, callOpts).then(function(r){ return r.text; });
+  }
+
+  var PERMANENT_CODES = {not_granted:1, sampling_disabled:1, not_declared:1, capability_disabled:1, capability_removed:1};
+  function friendlyError(e){
+    var code = e && e.code;
+    if (PERMANENT_CODES[code]){
+      state.aiUnavailable = true;
+      state.aiUnavailableReason = code === 'not_granted'
+        ? "Permission to consult Claude wasn't granted, so each stage below runs manually — fill it in yourself."
+        : "The research assistant isn't available in this view, so each stage below runs manually — fill it in yourself.";
+      return '';
+    }
+    if (code === 'cancelled') return '';
+    var map = {
+      rate_limited: "Claude is busy right now — wait a moment and try again.",
+      prompt_too_large: "That request was too long — shorten your notes and try again.",
+      invalid_json: "The reply didn't come back as clean data — try again.",
+      refused: "Claude declined that request — try rephrasing your notes.",
+      empty_completion: "Claude didn't return anything usable — try again.",
+      images_unavailable: "Images aren't used here.",
+      session_expired: "Your session expired — reload the page and sign in again."
+    };
+    return map[code] || ((e && e.message) || "Something went wrong talking to Claude — try again.");
+  }
+
+  function withBusy(label, work){
+    if (state.busy) return;
+    state.busy = true; state.wireLabel = label; state.wireText = ''; state.lastError = '';
+    var ctl = new AbortController();
+    activeController = ctl;
+    render();
+    work(ctl.signal, function(text){ state.wireText = text; paintWire(); }).catch(function(err){
+      state.lastError = friendlyError(err);
+    }).then(function(){
+      state.busy = false; activeController = null; saveLocal(); render();
+    });
+  }
+
+  // ---------- Prompt builders ----------
+  function domainBlock(){
+    return "DOMAIN\nProblem space: " + state.domain.problem +
+      "\nTime horizon: " + state.domain.horizon +
+      "\nPerspective (what this organization can and can't act on): " + (state.domain.perspective || '(not specified)');
+  }
+
+  function buildDriversPrompt(notes, isRegen){
+    var existing = state.drivers.items.map(function(d){ return d.name; }).join(', ');
+    return "You are a rigorous scenario-planning research analyst helping scope a design-forward foresight exercise.\n\n" +
+      domainBlock() + "\n\n" +
+      "TASK\nList the driving forces most relevant to how this domain could unfold over the stated horizon. Draw on technological, economic, social, and institutional angles. For each force estimate:\n" +
+      "- impact: how much it would shape outcomes in this domain, 1 (marginal) to 5 (defining)\n" +
+      "- uncertainty: how unpredictable its direction or magnitude is from today's vantage point, 1 (nearly certain) to 5 (wide open)\n" +
+      "Prefer forces that are impactful AND uncertain over ones that are merely important.\n" +
+      (isRegen ? ("\nThis replaces an earlier list (" + existing + "). Take a genuinely different cut.\n") : "") +
+      (notes ? ("\nAdditional guidance from the strategist: " + notes + "\n") : "") +
+      "\nReply with only a JSON array of 8 to 10 objects, each: {\"name\": short label (5 words max), \"description\": one sentence, \"impact\": integer 1-5, \"uncertainty\": integer 1-5}. No other text.";
+  }
+
+  function buildFuturesPrompt(notes, isRegen){
+    var a = getDriver(state.drivers.axisIds[0]);
+    var b = getDriver(state.drivers.axisIds[1]);
+    return "You are running a design-forward scenario-planning workshop — a lightweight, narrative variant of the classic 2x2 scenario matrix.\n\n" +
+      domainBlock() + "\n\n" +
+      "CHOSEN AXES (the two most impactful and uncertain driving forces)\nAxis A — " + a.name + ": " + a.description +
+      "\nAxis B — " + b.name + ": " + b.description + "\n\n" +
+      "TASK\n1. Name each axis's two opposite poles in a few words.\n" +
+      "2. Write four future scenarios, one for each corner of the grid formed by crossing the two axes' poles. Each should read like the start of an \"in a world where...\" story: vivid, concrete, plausible, 3-4 sentences, naming what a person would actually notice. Then list 2-3 observable signals that would tell someone this future is arriving.\n" +
+      (isRegen ? "\nThis replaces an earlier set of four futures. Take a genuinely different angle.\n" : "") +
+      (notes ? ("\nAdditional guidance from the strategist: " + notes + "\n") : "") +
+      "\nReply with only this JSON shape, no other text:\n" +
+      "{\"axisA\":{\"name\":\"...\",\"poleHigh\":\"...\",\"poleLow\":\"...\"},\"axisB\":{\"name\":\"...\",\"poleHigh\":\"...\",\"poleLow\":\"...\"}," +
+      "\"quadrants\":[{\"axisAPole\":\"high\",\"axisBPole\":\"high\",\"title\":\"...\",\"narrative\":\"...\",\"signals\":[\"...\",\"...\"]}," +
+      "{\"axisAPole\":\"high\",\"axisBPole\":\"low\",\"title\":\"...\",\"narrative\":\"...\",\"signals\":[\"...\"]}," +
+      "{\"axisAPole\":\"low\",\"axisBPole\":\"high\",\"title\":\"...\",\"narrative\":\"...\",\"signals\":[\"...\"]}," +
+      "{\"axisAPole\":\"low\",\"axisBPole\":\"low\",\"title\":\"...\",\"narrative\":\"...\",\"signals\":[\"...\"]}]}";
+  }
+
+  function buildQuadrantRegenPrompt(target, notes){
+    var others = state.futures.quadrants.filter(function(q){ return q.id !== target.id; })
+      .map(function(q){ return "- " + q.title + ": " + q.narrative; }).join('\n');
+    return "You are refining one quadrant of a four-quadrant scenario-planning matrix; keep it consistent with the other three.\n\n" +
+      domainBlock() + "\n\n" +
+      "Axis A (" + state.futures.axisA.name + "): pole for this quadrant = " + (target.axisAPole==='high'?state.futures.axisA.poleHigh:state.futures.axisA.poleLow) + "\n" +
+      "Axis B (" + state.futures.axisB.name + "): pole for this quadrant = " + (target.axisBPole==='high'?state.futures.axisB.poleHigh:state.futures.axisB.poleLow) + "\n\n" +
+      "THE OTHER THREE QUADRANTS (for contrast, do not repeat their content)\n" + others + "\n\n" +
+      "CURRENT DRAFT OF THIS QUADRANT\n" + target.title + ": " + target.narrative + "\n\n" +
+      (notes ? ("Guidance from the strategist: " + notes + "\n\n") : "") +
+      "Rewrite just this quadrant: a vivid \"in a world where...\" narrative, 3-4 sentences, plus 2-3 observable signals.\n" +
+      "Reply with only this JSON shape: {\"title\":\"...\",\"narrative\":\"...\",\"signals\":[\"...\",\"...\"]}";
+  }
+
+  function buildCritiquePrompt(target){
+    return "You are a skeptical scenario-planning critic. Be concrete and a little uncomfortable — the goal is to make the team defend or fix the story, not to be nice.\n\n" +
+      "SCENARIO\n" + target.title + ": " + target.narrative + "\n\n" +
+      "In 2-3 sentences, say what's generic, implausible, or hand-wavy about this scenario, and what would need to be true for it to be more convincing. Plain text only, no headers, no JSON.";
+  }
+
+  function buildConceptsPrompt(notes, isRegen){
+    var scenarioList = state.futures.quadrants.map(function(q){ return "[" + q.id + "] " + q.title + ": " + q.narrative; }).join('\n');
+    return "You are helping a design team \"embody\" solutions for a scenario-planning exercise — concrete concepts that make a future tangible enough to argue about.\n\n" +
+      domainBlock() + "\n\nSCENARIOS\n" + scenarioList + "\n\n" +
+      "TASK\nFor EACH scenario id listed above, propose 2 to 3 concept ideas a team would build if that future arrived — an interface, product feature, service, or communication — concrete enough to sketch, not a strategy statement. For each: a short name, a one-paragraph pitch a stakeholder could react to, and one sentence on why it specifically fits that world (not a generic idea that fits any world).\n" +
+      (isRegen ? "\nThis replaces an earlier set of concepts. Take a different angle.\n" : "") +
+      (notes ? ("\nAdditional guidance from the strategist: " + notes + "\n") : "") +
+      "\nReply with only a JSON array of objects: {\"scenarioId\": one of the ids above exactly, \"name\":\"...\",\"pitch\":\"...\",\"whyThisWorld\":\"...\"}. No other text.";
+  }
+
+  function buildStrategyPrompt(notes, isRegen){
+    var scenarioList = state.futures.quadrants.map(function(q){ return "[" + q.id + "] " + q.title; }).join('\n');
+    var shortlisted = state.concepts.list.filter(function(c){ return c.shortlisted; });
+    var conceptList = shortlisted.map(function(c){ return "[" + c.id + "] (from " + c.scenarioId + ") " + c.name + ": " + c.pitch; }).join('\n');
+    return "You are closing out a design-forward scenario-planning exercise using the Strategic Flexibility Matrix from decision-quality practice: every candidate move is a no-regrets bet (pays off in every scenario, do it now), an option (small, cheap, keeps a door open), a hedge (meaningful commitment that pays off in more than one scenario but not all), or a big bet (large commitment that only pays off if a specific scenario arrives — defer until a signpost lights up).\n\n" +
+      domainBlock() + "\n\nSCENARIOS\n" + scenarioList + "\n\nSHORTLISTED CONCEPTS\n" + conceptList + "\n\n" +
+      "TASK\n1. Classify EACH shortlisted concept above into exactly one bucket: \"no-regrets\", \"option\", \"hedge\", or \"big-bet\", with a one-sentence rationale grounded in how many scenarios it would pay off in.\n" +
+      "2. Identify 2-4 cross-scenario threads: common capabilities or investments implied by multiple concepts or scenarios regardless of which future arrives.\n" +
+      "3. Propose 3-5 tripwire signals worth monitoring now — concrete, observable indicators (survey trends, usage data, published research) that would tell the organization which scenario is emerging, each with why it matters and a one-line guess at which direction it's currently trending.\n" +
+      (isRegen ? "\nThis replaces an earlier synthesis. Take a different angle.\n" : "") +
+      (notes ? ("\nAdditional guidance from the strategist: " + notes + "\n") : "") +
+      "\nReply with only this JSON shape, no other text:\n{\"classification\":[{\"conceptId\":\"...\",\"bucket\":\"no-regrets|option|hedge|big-bet\",\"rationale\":\"...\"}],\"threads\":[{\"name\":\"...\",\"description\":\"...\"}],\"tripwires\":[{\"signal\":\"...\",\"whyItMatters\":\"...\",\"currentGuess\":\"...\"}]}";
+  }
+
+  // ---------- Stage actions ----------
+  function researchDrivers(){
+    var notesEl = document.getElementById('drivers-notes');
+    var notes = notesEl ? notesEl.value : state.drivers.notes;
+    state.drivers.notes = notes;
+    var isRegen = state.drivers.items.length > 0;
+    withBusy(isRegen ? 'Re-researching driving forces…' : 'Researching driving forces…', function(signal, onStream){
+      var prompt = buildDriversPrompt(notes, isRegen);
+      return callSample({prompt: prompt, asJson: true, signal: signal, onStream: onStream}).then(function(data){
+        var arr = Array.isArray(data) ? data : [];
+        state.drivers.items = arr.map(function(d){
+          return {
+            id: 'd' + (state.seq.driver++),
+            name: String((d && d.name) || 'Untitled force').slice(0,80),
+            description: String((d && d.description) || ''),
+            impact: clamp15(d && d.impact),
+            uncertainty: clamp15(d && d.uncertainty)
+          };
+        });
+        state.drivers.axisIds = [];
+        markStale('drivers');
+      });
+    });
+  }
+
+  function addDriverManually(){
+    var nameEl = document.getElementById('new-driver-name');
+    var descEl = document.getElementById('new-driver-desc');
+    var name = nameEl.value.trim();
+    if (!name) return;
+    state.drivers.items.push({id:'d'+(state.seq.driver++), name:name, description:descEl.value.trim(), impact:3, uncertainty:3});
+    markStale('drivers');
+    render();
+  }
+
+  function toggleAxis(id){
+    var idx = state.drivers.axisIds.indexOf(id);
+    if (idx >= 0){ state.drivers.axisIds.splice(idx,1); state.drivers.hint=''; }
+    else if (state.drivers.axisIds.length < 2){ state.drivers.axisIds.push(id); state.drivers.hint=''; }
+    else { state.drivers.hint = 'Two axes are already chosen — deselect one first.'; }
+    markStale('drivers');
+    render();
+  }
+
+  function generateFutures(){
+    var notesEl = document.getElementById('futures-notes');
+    var notes = notesEl ? notesEl.value : state.futures.notes;
+    state.futures.notes = notes;
+    var isRegen = state.futures.quadrants.length > 0;
+    withBusy(isRegen ? 'Re-drafting the four futures…' : 'Drafting the four futures…', function(signal, onStream){
+      var prompt = buildFuturesPrompt(notes, isRegen);
+      return callSample({prompt: prompt, asJson: true, signal: signal, onStream: onStream}).then(function(data){
+        state.futures.axisA = (data && data.axisA) || {name:'Axis A', poleHigh:'High', poleLow:'Low'};
+        state.futures.axisB = (data && data.axisB) || {name:'Axis B', poleHigh:'High', poleLow:'Low'};
+        var quads = (data && data.quadrants) || [];
+        state.futures.quadrants = quads.map(function(q){
+          var aPole = q.axisAPole === 'low' ? 'low' : 'high';
+          var bPole = q.axisBPole === 'low' ? 'low' : 'high';
+          return {
+            id: aPole + '_' + bPole,
+            axisAPole: aPole, axisBPole: bPole,
+            title: String(q.title || 'Untitled future'),
+            narrative: String(q.narrative || ''),
+            signals: Array.isArray(q.signals) ? q.signals.map(String) : [],
+            critique: ''
+          };
+        });
+        state.futures.stale = false;
+        markStale('futures');
+      });
+    });
+  }
+
+  function regenerateQuadrant(id){
+    var target = null;
+    for (var i=0;i<state.futures.quadrants.length;i++) if (state.futures.quadrants[i].id===id) target = state.futures.quadrants[i];
+    if (!target) return;
+    var notesEl = document.getElementById('futures-notes');
+    var notes = notesEl ? notesEl.value : state.futures.notes;
+    withBusy('Redrafting one quadrant…', function(signal, onStream){
+      var prompt = buildQuadrantRegenPrompt(target, notes);
+      return callSample({prompt: prompt, asJson: true, signal: signal, onStream: onStream}).then(function(data){
+        target.title = String((data && data.title) || target.title);
+        target.narrative = String((data && data.narrative) || target.narrative);
+        target.signals = Array.isArray(data && data.signals) ? data.signals.map(String) : target.signals;
+        target.critique = '';
+        markStale('futures');
+      });
+    });
+  }
+
+  function challengeQuadrant(id){
+    var target = null;
+    for (var i=0;i<state.futures.quadrants.length;i++) if (state.futures.quadrants[i].id===id) target = state.futures.quadrants[i];
+    if (!target) return;
+    withBusy('Consulting the critic…', function(signal, onStream){
+      var prompt = buildCritiquePrompt(target);
+      return callSample({prompt: prompt, asJson: false, signal: signal, onStream: onStream}).then(function(text){
+        target.critique = text;
+      });
+    });
+  }
+
+  function saveQuadrantEdit(id, titleVal, narrativeVal){
+    var target = null;
+    for (var i=0;i<state.futures.quadrants.length;i++) if (state.futures.quadrants[i].id===id) target = state.futures.quadrants[i];
+    if (!target) return;
+    target.title = titleVal.trim() || target.title;
+    target.narrative = narrativeVal.trim();
+    editingQuadrantId = null;
+    markStale('futures');
+    render();
+  }
+
+  function generateConcepts(){
+    var notesEl = document.getElementById('concepts-notes');
+    var notes = notesEl ? notesEl.value : state.concepts.notes;
+    state.concepts.notes = notes;
+    var isRegen = state.concepts.list.length > 0;
+    withBusy(isRegen ? 'Re-proposing concepts…' : 'Proposing solution concepts…', function(signal, onStream){
+      var prompt = buildConceptsPrompt(notes, isRegen);
+      return callSample({prompt: prompt, asJson: true, signal: signal, onStream: onStream}).then(function(data){
+        var arr = Array.isArray(data) ? data : [];
+        var validIds = state.futures.quadrants.map(function(q){ return q.id; });
+        state.concepts.list = arr.filter(function(c){ return validIds.indexOf(c.scenarioId) >= 0; }).map(function(c){
+          return {
+            id: 'c' + (state.seq.concept++),
+            scenarioId: c.scenarioId,
+            name: String(c.name || 'Untitled concept'),
+            pitch: String(c.pitch || ''),
+            whyThisWorld: String(c.whyThisWorld || ''),
+            shortlisted: false
+          };
+        });
+        state.concepts.stale = false;
+        markStale('concepts');
+      });
+    });
+  }
+
+  function toggleShortlist(id){
+    for (var i=0;i<state.concepts.list.length;i++) if (state.concepts.list[i].id===id) state.concepts.list[i].shortlisted = !state.concepts.list[i].shortlisted;
+    markStale('concepts');
+    render();
+  }
+
+  function synthesizeStrategy(){
+    var notesEl = document.getElementById('strategy-notes');
+    var notes = notesEl ? notesEl.value : state.strategy.notes;
+    state.strategy.notes = notes;
+    var isRegen = state.strategy.classification.length > 0;
+    withBusy(isRegen ? 'Re-synthesizing strategy…' : 'Synthesizing strategy…', function(signal, onStream){
+      var prompt = buildStrategyPrompt(notes, isRegen);
+      return callSample({prompt: prompt, asJson: true, signal: signal, onStream: onStream}).then(function(data){
+        state.strategy.classification = Array.isArray(data && data.classification) ? data.classification : [];
+        state.strategy.threads = Array.isArray(data && data.threads) ? data.threads : [];
+        state.strategy.tripwires = Array.isArray(data && data.tripwires) ? data.tripwires : [];
+        state.strategy.stale = false;
+      });
+    });
+  }
+
+  function buildMarkdownReport(){
+    var lines = [];
+    lines.push('# Futures Compass — ' + state.domain.problem);
+    lines.push('');
+    lines.push('**Time horizon:** ' + state.domain.horizon);
+    lines.push('**Perspective:** ' + state.domain.perspective);
+    lines.push('');
+    lines.push('## Drivers chosen as axes');
+    state.drivers.axisIds.forEach(function(id){
+      var d = getDriver(id);
+      if (d) lines.push('- **' + d.name + '** (impact ' + d.impact + '/5, uncertainty ' + d.uncertainty + '/5) — ' + d.description);
+    });
+    lines.push('');
+    lines.push('## The four futures');
+    state.futures.quadrants.forEach(function(q){
+      lines.push('### ' + q.title);
+      lines.push(q.narrative);
+      if (q.signals.length) lines.push('*Signals to watch:* ' + q.signals.join('; '));
+      if (q.critique) lines.push('> Critic’s note: ' + q.critique);
+      lines.push('');
+    });
+    lines.push('## Concepts');
+    state.futures.quadrants.forEach(function(q){
+      var cs = state.concepts.list.filter(function(c){ return c.scenarioId === q.id; });
+      if (!cs.length) return;
+      lines.push('**' + q.title + '**');
+      cs.forEach(function(c){
+        lines.push('- ' + (c.shortlisted ? '[shortlisted] ' : '') + c.name + ' — ' + c.pitch + ' (' + c.whyThisWorld + ')');
+      });
+    });
+    lines.push('');
+    lines.push('## Strategic flexibility matrix');
+    ['no-regrets','option','hedge','big-bet'].forEach(function(bucket){
+      var items = state.strategy.classification.filter(function(c){ return c.bucket === bucket; });
+      if (!items.length) return;
+      lines.push('**' + bucket + '**');
+      items.forEach(function(it){
+        var c = null;
+        for (var i=0;i<state.concepts.list.length;i++) if (state.concepts.list[i].id===it.conceptId) c = state.concepts.list[i];
+        lines.push('- ' + (c ? c.name : it.conceptId) + ' — ' + it.rationale);
+      });
+    });
+    lines.push('');
+    lines.push('## Cross-scenario threads');
+    state.strategy.threads.forEach(function(t){ lines.push('- **' + t.name + '**: ' + t.description); });
+    lines.push('');
+    lines.push('## Tripwires to monitor');
+    state.strategy.tripwires.forEach(function(t){ lines.push('- ' + t.signal + ' — ' + t.whyItMatters + ' (currently: ' + t.currentGuess + ')'); });
+    lines.push('');
+    lines.push('_Generated with Futures Compass, a design-forward scenario-planning instrument._');
+    return lines.join('\n');
+  }
+
+  function exportMarkdown(){
+    if (!downloadsApi){
+      state.lastError = "Downloads aren't available in this view — copy the text from the page instead.";
+      render();
+      return;
+    }
+    downloadsApi.save({filename: 'futures-compass-' + slug(state.domain.problem) + '.md', data: buildMarkdownReport()})
+      .catch(function(e){
+        if (e && e.code !== 'declined'){ state.lastError = 'Could not save the file — try again.'; render(); }
+      });
+  }
+
+  var resetArmed = false;
+  var resetArmTimer = null;
+  function resetApp(){
+    // window.confirm() is unreliable inside a sandboxed artifact frame — it can silently
+    // no-op instead of showing a dialog. Use a two-click, in-page confirm instead.
+    var btn = document.getElementById('reset-btn');
+    if (!resetArmed){
+      resetArmed = true;
+      btn.textContent = 'Click again to confirm — this clears everything';
+      clearTimeout(resetArmTimer);
+      resetArmTimer = setTimeout(function(){ resetArmed = false; btn.textContent = 'Start a new domain'; }, 4000);
+      return;
+    }
+    clearTimeout(resetArmTimer);
+    resetArmed = false;
+    btn.textContent = 'Start a new domain';
+    state = defaultState();
+    state.isExample = false;
+    state.domain = {problem:'', horizon:'', perspective:''};
+    editingQuadrantId = null;
+    saveLocal();
+    render();
+  }
+
+  // ---------- Rendering ----------
+  function paintWire(){
+    var pre = document.getElementById('wire-text');
+    if (pre) pre.textContent = state.wireText;
+  }
+
+  function renderBanner(){
+    var b = document.getElementById('ai-banner');
+    if (state.aiUnavailable){ b.hidden = false; b.textContent = state.aiUnavailableReason; }
+    else { b.hidden = true; }
+  }
+
+  function renderCourse(){
+    var courseEl = document.getElementById('course');
+    courseEl.innerHTML = '';
+    STAGES.forEach(function(s, i){
+      var reached = state.reached[s.key];
+      var current = state.stage === s.key;
+      var cls = 'stop' + (current ? ' is-current' : '') + (reached ? ' is-reached' : ' is-locked');
+      var btn = el('button', {type:'button', class: cls, disabled: !reached, onclick: function(key){ return function(){ if (state.busy) return; state.stage = key; render(); }; }(s.key)},
+        el('span', {class:'stop-num'}, s.num),
+        el('span', {class:'stop-dot'}),
+        el('span', {class:'stop-label'}, s.label),
+        el('span', {class:'stop-time'}, s.time)
+      );
+      courseEl.appendChild(btn);
+      if (i < STAGES.length - 1) courseEl.appendChild(el('span', {class:'course-line'}));
+    });
+  }
+
+  function renderWire(){
+    var wire = document.getElementById('wire');
+    wire.hidden = !state.busy;
+    document.getElementById('wire-label').textContent = state.wireLabel;
+    document.getElementById('wire-text').textContent = state.wireText;
+    document.getElementById('wire-stop').onclick = function(){ if (activeController) activeController.abort(); };
+  }
+
+  function errorNote(){
+    return state.lastError ? el('div', {class:'error-note'}, state.lastError) : null;
+  }
+
+  // Native Node.appendChild throws on null (unlike our el()-internal appendChild, which
+  // tolerates it for variadic children) — use this for anything that can return null.
+  function appendMaybe(parent, child){
+    if (child != null) parent.appendChild(child);
+  }
+
+  function staleBanner(text){
+    return el('div', {class:'stale-banner'}, text);
+  }
+
+  function timeHint(text){
+    return el('span', {style:'font-family:var(--font-mono); font-size:.72rem; color:var(--muted); margin-left:10px;'}, text);
+  }
+
+  // --- Domain stage ---
+  var domainFormError = '';
+
+  function buildWelcome(){
+    var box = el('div', {class:'welcome'});
+    box.appendChild(el('h3', {}, 'Welcome — here’s how this works'));
+    box.appendChild(el('p', {style:'font-size:.85rem; color:var(--ink-soft); margin:0;'},
+      'Five short stages, each ending with something for you to review and adjust before Claude moves on. Nothing advances without your click.'));
+    box.appendChild(el('ol', {},
+      el('li', {}, el('b',{},'Domain '), el('span',{class:'time'}, '(~2 min)'), ' — you describe the problem and horizon below, right now.'),
+      el('li', {}, el('b',{},'Drivers '), el('span',{class:'time'}, '(~1-2 min)'), ' — Claude researches forces (10-30s), you rank and pick two as axes.'),
+      el('li', {}, el('b',{},'Futures '), el('span',{class:'time'}, '(~1 min)'), ' — Claude drafts four future stories (10-30s), you edit or challenge them.'),
+      el('li', {}, el('b',{},'Concepts '), el('span',{class:'time'}, '(~1 min)'), ' — Claude proposes ideas per future (10-30s), you shortlist a few.'),
+      el('li', {}, el('b',{},'Strategy '), el('span',{class:'time'}, '(~1 min)'), ' — Claude sorts your picks into a strategy board and tripwires.')
+    ));
+    box.appendChild(el('div', {class:'welcome-dismiss'},
+      el('button', {class:'btn ghost small', onclick: function(){ state.welcomeDismissed = true; render(); }}, 'Got it — hide this')
+    ));
+    return box;
+  }
+
+  function buildDomainCanvas(){
+    var wrap = el('div', {});
+    if (!state.welcomeDismissed) wrap.appendChild(buildWelcome());
+    wrap.appendChild(el('h2', {class:'section-heading'}, 'Step 1 — Define the domain'));
+    wrap.appendChild(el('p', {style:'color:var(--muted); font-size:.88rem; margin-bottom:16px;'},
+      'Pick a problem space and a time horizon, then click Continue below. Be honest about whose question this is — that shapes which uncertainties you can act on.'));
+    if (state.isExample) wrap.appendChild(el('span', {class:'example-badge'}, 'Example prefilled — edit freely, or clear and use your own'));
+    appendMaybe(wrap, errorNote());
+
+    wrap.appendChild(el('div', {class:'field'},
+      el('label', {for:'domain-problem'}, 'Problem space'),
+      el('textarea', {id:'domain-problem', rows:'3'}, state.domain.problem)
+    ));
+    wrap.appendChild(el('div', {class:'field'},
+      el('label', {for:'domain-horizon'}, 'Time horizon'),
+      el('input', {type:'text', id:'domain-horizon', value: state.domain.horizon})
+    ));
+    wrap.appendChild(el('div', {class:'field'},
+      el('label', {for:'domain-perspective'}, "Perspective — who's asking, what they can and can't act on"),
+      el('textarea', {id:'domain-perspective', rows:'3'}, state.domain.perspective)
+    ));
+    if (domainFormError) wrap.appendChild(el('p', {class:'field-error'}, domainFormError));
+
+    wrap.appendChild(el('div', {class:'btn-row'},
+      el('button', {class:'btn', onclick: function(){
+        var problem = document.getElementById('domain-problem').value.trim();
+        var horizon = document.getElementById('domain-horizon').value.trim();
+        var perspective = document.getElementById('domain-perspective').value.trim();
+        state.domain = {problem:problem, horizon:horizon, perspective:perspective};
+        if (!problem || !horizon){
+          domainFormError = !problem ? 'Add a problem space before continuing.' : 'Add a time horizon before continuing.';
+          render();
+          return;
+        }
+        domainFormError = '';
+        state.isExample = false;
+        state.reached.drivers = true;
+        state.stage = 'drivers';
+        render();
+      }}, 'Continue to drivers'),
+      el('button', {class:'btn ghost', onclick: function(){
+        document.getElementById('domain-problem').value = '';
+        document.getElementById('domain-horizon').value = '';
+        document.getElementById('domain-perspective').value = '';
+        state.isExample = false;
+        domainFormError = '';
+        render();
+      }}, 'Clear fields')
+    ));
+    return wrap;
+  }
+
+  // --- Drivers stage ---
+  function buildDriversCanvas(){
+    var wrap = el('div', {});
+    wrap.appendChild(el('h2', {class:'section-heading'}, 'Prioritize the driving forces'));
+    wrap.appendChild(el('p', {style:'color:var(--muted); font-size:.88rem; margin-bottom:16px;'},
+      'Rank by impact and by uncertainty — they rarely agree. Choose the two forces that are both, as your axes.'));
+    appendMaybe(wrap, errorNote());
+
+    if (!state.drivers.items.length){
+      if (state.aiUnavailable){
+        wrap.appendChild(el('p', {style:'font-size:.85rem; color:var(--muted);'}, 'Add the driving forces you want to consider by hand below.'));
+      } else {
+        wrap.appendChild(el('button', {class:'btn', disabled: state.busy, onclick: researchDrivers}, 'Research driving forces'));
+        wrap.appendChild(timeHint('usually 10-30 seconds'));
+      }
+    }
+
+    if (state.drivers.items.length){
+      var list = el('div', {class:'driver-list'});
+      state.drivers.items.forEach(function(d){
+        var isAxis = state.drivers.axisIds.indexOf(d.id) >= 0;
+        var card = el('div', {class:'driver-card'},
+          el('div', {class:'driver-top'},
+            el('div', {},
+              el('p', {class:'driver-name'}, d.name),
+              el('p', {class:'driver-desc'}, d.description)
+            ),
+            el('div', {class:'driver-tools'},
+              el('button', {class:'axis-star' + (isAxis?' is-on':''), onclick: function(id){ return function(){ toggleAxis(id); }; }(d.id)}, isAxis ? '★ Axis' : '☆ Use as axis'),
+              el('button', {class:'remove-x', title:'Remove', onclick: function(id){ return function(){
+                state.drivers.items = state.drivers.items.filter(function(x){ return x.id!==id; });
+                state.drivers.axisIds = state.drivers.axisIds.filter(function(x){ return x!==id; });
+                markStale('drivers'); render();
+              }; }(d.id)}, '×')
+            )
+          ),
+          el('div', {class:'slider-group'},
+            el('div', {class:'slider-item impact'},
+              el('span', {class:'lbl'}, el('span',{}, 'Impact'), el('span',{class:'readout'}, String(d.impact))),
+              el('input', {type:'range', min:'1', max:'5', step:'1', value:String(d.impact), oninput: function(item, cardEl){ return function(e){
+                item.impact = Number(e.target.value);
+                cardEl.querySelector('.slider-item.impact .readout').textContent = String(item.impact);
+              }; }(d, card)})
+            ),
+            el('div', {class:'slider-item uncertainty'},
+              el('span', {class:'lbl'}, el('span',{}, 'Uncertainty'), el('span',{class:'readout'}, String(d.uncertainty))),
+              el('input', {type:'range', min:'1', max:'5', step:'1', value:String(d.uncertainty), oninput: function(item, cardEl){ return function(e){
+                item.uncertainty = Number(e.target.value);
+                cardEl.querySelector('.slider-item.uncertainty .readout').textContent = String(item.uncertainty);
+              }; }(d, card)})
+            )
+          )
+        );
+        list.appendChild(card);
+      });
+      wrap.appendChild(list);
+      if (state.drivers.hint) wrap.appendChild(el('p', {class:'hint'}, state.drivers.hint));
+
+      wrap.appendChild(el('div', {class:'add-driver-form'},
+        el('input', {type:'text', id:'new-driver-name', placeholder:'Force name'}),
+        el('input', {type:'text', id:'new-driver-desc', placeholder:'One-sentence description'}),
+        el('button', {class:'btn secondary small', onclick: addDriverManually}, 'Add')
+      ));
+    }
+    return wrap;
+  }
+
+  function buildDriversRail(){
+    var box = el('div', {class:'rail-block'});
+    box.appendChild(el('h3', {}, 'Steering notes'));
+    box.appendChild(el('textarea', {id:'drivers-notes', rows:'4', placeholder:'e.g. weight regulatory forces more heavily…'}, state.drivers.notes));
+    box.appendChild(el('div', {class:'btn-row'},
+      state.drivers.items.length && !state.aiUnavailable
+        ? el('button', {class:'btn secondary small', disabled: state.busy, onclick: researchDrivers}, 'Regenerate list')
+        : null,
+      el('button', {class:'btn small', disabled: state.busy || state.drivers.axisIds.length !== 2, onclick: function(){
+        state.reached.futures = true; state.stage = 'futures'; render();
+      }}, 'Continue to futures')
+    ));
+    return box;
+  }
+
+  // --- Futures stage ---
+  function buildFuturesCanvas(){
+    var wrap = el('div', {});
+    wrap.appendChild(el('h2', {class:'section-heading'}, 'Chart the four futures'));
+    wrap.appendChild(el('p', {style:'color:var(--muted); font-size:.88rem; margin-bottom:16px;'},
+      'Each quadrant crosses one pole of each axis. Push back on any story that feels generic — use the critic.'));
+    appendMaybe(wrap, errorNote());
+    if (state.futures.stale) wrap.appendChild(staleBanner('The drivers upstream have changed — consider regenerating these futures.'));
+
+    if (!state.futures.quadrants.length){
+      if (state.aiUnavailable){
+        wrap.appendChild(el('p', {style:'font-size:.85rem; color:var(--muted);'}, 'Sketch the four futures yourself in your notes, then move on to concepts.'));
+      } else {
+        wrap.appendChild(el('button', {class:'btn', disabled: state.busy, onclick: generateFutures}, 'Generate the four futures'));
+        wrap.appendChild(timeHint('usually 10-30 seconds'));
+      }
+      return wrap;
+    }
+
+    var m = el('div', {class:'matrix'});
+    var a = state.futures.axisA, b = state.futures.axisB;
+    function place(node, col, row, colSpan, rowSpan){
+      node.style.gridColumn = colSpan ? (col + ' / span ' + colSpan) : String(col);
+      node.style.gridRow = rowSpan ? (row + ' / span ' + rowSpan) : String(row);
+      return node;
+    }
+    m.appendChild(place(el('div', {}), 1, 1));
+    m.appendChild(place(el('div', {}), 2, 1));
+    m.appendChild(place(el('div', {class:'axis-name-top'}, 'Axis A — ' + a.name), 3, 1, 2));
+    m.appendChild(place(el('div', {}), 1, 2));
+    m.appendChild(place(el('div', {}), 2, 2));
+    m.appendChild(place(el('div', {class:'axis-label-top'}, a.poleHigh), 3, 2));
+    m.appendChild(place(el('div', {class:'axis-label-top'}, a.poleLow), 4, 2));
+    m.appendChild(place(el('div', {class:'axis-name-side'}, 'Axis B — ' + b.name), 1, 3, null, 2));
+    m.appendChild(place(el('div', {class:'axis-label-side'}, b.poleHigh), 2, 3));
+    m.appendChild(place(quadrantCard(findQuad('high','high')), 3, 3));
+    m.appendChild(place(quadrantCard(findQuad('low','high')), 4, 3));
+    m.appendChild(place(el('div', {class:'axis-label-side'}, b.poleLow), 2, 4));
+    m.appendChild(place(quadrantCard(findQuad('high','low')), 3, 4));
+    m.appendChild(place(quadrantCard(findQuad('low','low')), 4, 4));
+    wrap.appendChild(m);
+    return wrap;
+  }
+
+  function quadrantCard(q){
+    if (!q) return el('div', {class:'quad-card'}, 'Missing quadrant.');
+    if (editingQuadrantId === q.id){
+      var titleInput = el('input', {type:'text', value: q.title});
+      var narrativeInput = el('textarea', {rows:'4'}, q.narrative);
+      return el('div', {class:'quad-card'},
+        titleInput, el('div', {style:'height:8px;'}), narrativeInput,
+        el('div', {class:'card-actions', style:'margin-top:10px;'},
+          el('button', {class:'btn small', onclick: function(){ saveQuadrantEdit(q.id, titleInput.value, narrativeInput.value); }}, 'Save'),
+          el('button', {class:'btn ghost small', onclick: function(){ editingQuadrantId = null; render(); }}, 'Cancel')
+        )
+      );
+    }
+    var card = el('div', {class:'quad-card'},
+      el('h4', {}, q.title),
+      el('p', {}, q.narrative),
+      el('div', {class:'signals'}, q.signals.map(function(s){ return el('span', {class:'signal-tag'}, s); }))
+    );
+    card.appendChild(el('div', {class:'card-actions'},
+      el('button', {class:'btn ghost small', onclick: function(){ editingQuadrantId = q.id; render(); }}, 'Edit'),
+      state.aiUnavailable ? null : el('button', {class:'btn ghost small', disabled: state.busy, onclick: function(){ regenerateQuadrant(q.id); }}, 'Regenerate'),
+      state.aiUnavailable ? null : el('button', {class:'btn ghost small', disabled: state.busy, onclick: function(){ challengeQuadrant(q.id); }}, 'Challenge plausibility')
+    ));
+    if (q.critique) card.appendChild(el('div', {class:'critique'}, el('b', {}, "Critic's note"), q.critique));
+    return card;
+  }
+
+  function buildFuturesRail(){
+    var box = el('div', {class:'rail-block'});
+    box.appendChild(el('h3', {}, 'Steering notes'));
+    box.appendChild(el('textarea', {id:'futures-notes', rows:'4', placeholder:'e.g. make these grittier, less utopian…'}, state.futures.notes));
+    box.appendChild(el('div', {class:'btn-row'},
+      state.futures.quadrants.length && !state.aiUnavailable
+        ? el('button', {class:'btn secondary small', disabled: state.busy, onclick: generateFutures}, 'Regenerate all four')
+        : null,
+      el('button', {class:'btn small', disabled: state.busy || !state.futures.quadrants.length, onclick: function(){
+        state.reached.concepts = true; state.stage = 'concepts'; render();
+      }}, 'Continue to concepts')
+    ));
+    return box;
+  }
+
+  // --- Concepts stage ---
+  function buildConceptsCanvas(){
+    var wrap = el('div', {});
+    wrap.appendChild(el('h2', {class:'section-heading'}, 'Embody solutions'));
+    wrap.appendChild(el('p', {style:'color:var(--muted); font-size:.88rem; margin-bottom:16px;'},
+      'For each future, a few concrete concepts. Shortlist the ones worth carrying into the strategy synthesis.'));
+    appendMaybe(wrap, errorNote());
+    if (state.concepts.stale) wrap.appendChild(staleBanner('The futures upstream have changed — consider regenerating these concepts.'));
+
+    if (!state.concepts.list.length){
+      if (state.aiUnavailable){
+        wrap.appendChild(el('p', {style:'font-size:.85rem; color:var(--muted);'}, 'Sketch a couple of concepts per future in your notes, then move on to strategy.'));
+      } else {
+        wrap.appendChild(el('button', {class:'btn', disabled: state.busy, onclick: generateConcepts}, 'Propose solution concepts'));
+        wrap.appendChild(timeHint('usually 15-40 seconds'));
+      }
+      return wrap;
+    }
+
+    state.futures.quadrants.forEach(function(q){
+      var cs = state.concepts.list.filter(function(c){ return c.scenarioId === q.id; });
+      if (!cs.length) return;
+      var group = el('div', {class:'concept-group'}, el('h4', {}, q.title));
+      var grid = el('div', {class:'concept-grid'});
+      cs.forEach(function(c){
+        grid.appendChild(el('div', {class:'concept-card' + (c.shortlisted?' is-shortlisted':'')},
+          el('h5', {}, c.name),
+          el('p', {}, c.pitch),
+          el('p', {class:'why'}, c.whyThisWorld),
+          el('label', {class:'shortlist-toggle'},
+            el('input', {type:'checkbox', checked: c.shortlisted, onchange: function(id){ return function(){ toggleShortlist(id); }; }(c.id)}),
+            'Shortlist for strategy'
+          )
+        ));
+      });
+      group.appendChild(grid);
+      wrap.appendChild(group);
+    });
+    return wrap;
+  }
+
+  function buildConceptsRail(){
+    var box = el('div', {class:'rail-block'});
+    box.appendChild(el('h3', {}, 'Steering notes'));
+    box.appendChild(el('textarea', {id:'concepts-notes', rows:'4', placeholder:'e.g. favor low-fidelity, low-cost ideas…'}, state.concepts.notes));
+    var shortlistedCount = state.concepts.list.filter(function(c){ return c.shortlisted; }).length;
+    box.appendChild(el('div', {class:'btn-row'},
+      state.concepts.list.length && !state.aiUnavailable
+        ? el('button', {class:'btn secondary small', disabled: state.busy, onclick: generateConcepts}, 'Regenerate all')
+        : null,
+      el('button', {class:'btn small', disabled: state.busy || !shortlistedCount, onclick: function(){
+        state.reached.strategy = true; state.stage = 'strategy'; render();
+      }}, 'Continue to strategy')
+    ));
+    if (!shortlistedCount && state.concepts.list.length) box.appendChild(el('p', {class:'hint'}, 'Shortlist at least one concept to continue.'));
+    return box;
+  }
+
+  // --- Strategy stage ---
+  var BUCKET_LABELS = {'no-regrets':'No-regrets', 'option':'Option', 'hedge':'Hedge', 'big-bet':'Big bet'};
+  var BUCKET_SUB = {
+    'no-regrets': 'Pays off in every scenario — do it now.',
+    'option': 'Small and cheap — keeps a door open.',
+    'hedge': 'Meaningful commitment, pays off in more than one future.',
+    'big-bet': 'Only pays off in one future — wait for the signal.'
+  };
+
+  function buildStrategyCanvas(){
+    var wrap = el('div', {});
+    wrap.appendChild(el('h2', {class:'section-heading'}, 'Discern patterns, build strategy'));
+    wrap.appendChild(el('p', {style:'color:var(--muted); font-size:.88rem; margin-bottom:16px;'},
+      "What pays off no matter which future arrives, and what should wait for a signal?"));
+    appendMaybe(wrap, errorNote());
+    if (state.strategy.stale) wrap.appendChild(staleBanner('The concepts upstream have changed — consider re-synthesizing.'));
+
+    if (!state.strategy.classification.length){
+      if (state.aiUnavailable){
+        wrap.appendChild(el('p', {style:'font-size:.85rem; color:var(--muted);'}, 'Sort your shortlisted concepts into no-regrets / option / hedge / big-bet by hand.'));
+      } else {
+        wrap.appendChild(el('button', {class:'btn', disabled: state.busy, onclick: synthesizeStrategy}, 'Synthesize strategy'));
+        wrap.appendChild(timeHint('usually 20-45 seconds'));
+      }
+      return wrap;
+    }
+
+    var board = el('div', {class:'board'});
+    ['no-regrets','option','hedge','big-bet'].forEach(function(bucket){
+      var items = state.strategy.classification.filter(function(c){ return c.bucket === bucket; });
+      var col = el('div', {class:'bucket ' + bucket},
+        el('h4', {}, BUCKET_LABELS[bucket]),
+        el('p', {class:'bucket-sub'}, BUCKET_SUB[bucket])
+      );
+      items.forEach(function(it){
+        var c = null;
+        for (var i=0;i<state.concepts.list.length;i++) if (state.concepts.list[i].id===it.conceptId) c = state.concepts.list[i];
+        col.appendChild(el('div', {class:'chip'}, el('b', {}, c ? c.name : it.conceptId), el('div', {class:'rationale'}, it.rationale)));
+      });
+      board.appendChild(col);
+    });
+    wrap.appendChild(board);
+
+    wrap.appendChild(el('h3', {class:'subsection-heading'}, 'Cross-scenario threads'));
+    var threads = el('div', {class:'threads-list'});
+    state.strategy.threads.forEach(function(t){ threads.appendChild(el('div', {class:'thread-item'}, el('b', {}, t.name), ' — ' + t.description)); });
+    wrap.appendChild(threads);
+
+    wrap.appendChild(el('h3', {class:'subsection-heading'}, 'Tripwires to monitor'));
+    var tw = el('div', {class:'tripwire-list'});
+    state.strategy.tripwires.forEach(function(t){
+      tw.appendChild(el('div', {class:'tripwire-item'},
+        el('b', {}, t.signal), ' — ' + t.whyItMatters,
+        el('span', {class:'guess'}, 'Currently trending: ' + t.currentGuess)
+      ));
+    });
+    wrap.appendChild(tw);
+    return wrap;
+  }
+
+  function buildStrategyRail(){
+    var box = el('div', {class:'rail-block'});
+    box.appendChild(el('h3', {}, 'Steering notes'));
+    box.appendChild(el('textarea', {id:'strategy-notes', rows:'4', placeholder:'e.g. weight tripwires toward things we can measure with public data…'}, state.strategy.notes));
+    box.appendChild(el('div', {class:'btn-row'},
+      state.strategy.classification.length && !state.aiUnavailable
+        ? el('button', {class:'btn secondary small', disabled: state.busy, onclick: synthesizeStrategy}, 'Re-synthesize')
+        : null,
+      state.strategy.classification.length
+        ? el('button', {class:'btn small', onclick: exportMarkdown}, 'Export as Markdown')
+        : null
+    ));
+    return box;
+  }
+
+  // ---------- Discussion decks (.pptx) ----------
+  var STAGE_LABEL = {domain:'Domain', drivers:'Drivers', futures:'Futures', concepts:'Concepts', strategy:'Strategy'};
+  var STAGE_NUM = {domain:1, drivers:2, futures:3, concepts:4, strategy:5};
+  var STAGE_NEXT = {domain:'drivers', drivers:'futures', futures:'concepts', concepts:'strategy'};
+  var PAL = {ground:'F4F6EF', surface:'EAEEE3', ink:'182027', soft:'3E4A45', muted:'5E6E67', border:'A9B49C',
+             brass:'A9702A', brassSoft:'E8D3AF', teal:'285C63', tealSoft:'C9DEDC', moss:'3C6B49', mossSoft:'CFE0CE',
+             verm:'9C4030', vermSoft:'ECD3CB', white:'FFFFFF'};
+  var FNT = {display:'Georgia', body:'Arial', mono:'Courier New'};
+  var BUCKETS = [['no-regrets', 'NO-REGRETS', 'Pays off in every future — start now', PAL.moss], ['option', 'OPTION', 'Small and cheap — keeps a door open', PAL.teal],
+             ['hedge', 'HEDGE', 'Pays off in more than one future', PAL.brass], ['big-bet', 'BIG BET', 'Only pays if one future arrives — wait for the signal', PAL.verm]];
+
+  var DECK_PROMPTS = {
+    domain: [
+      'Is this the right question — or is it too big, too small, or too safe?',
+      'Whose perspective is missing from how we framed it?',
+      'What can we actually act on within this horizon, and what is just context?',
+      'What would make this whole exercise a waste of time?'
+    ],
+    drivers: [
+      'Which forces would you rank differently on impact? On uncertainty?',
+      'What force is missing — the one that keeps you up at night?',
+      'Which two forces are both high-impact and truly uncertain? Argue for your pair.',
+      'Which of these "uncertain" forces are actually fairly predictable?'
+    ],
+    futures: [
+      'Which future would surprise leadership most? Which worries you most?',
+      'What is implausible, generic, or hand-wavy — and what would make it ring true?',
+      'What is the first thing we would notice if this future were arriving?',
+      'Do any two of these feel too similar? Is a future missing?'
+    ],
+    concepts: [
+      'Which of these would we actually build or fund? Which are fantasy today?',
+      'Which idea shows up in more than one future wearing different clothes?',
+      'What is missing — a concept nobody proposed?',
+      'Who would have to say yes, and what would make them say no?'
+    ],
+    strategy: [
+      'Do we agree with these buckets? What would you move, and why?',
+      'Which no-regrets items can start now — and who owns each?',
+      'Which tripwires could we really measure, and what threshold would change our minds?',
+      'What would we regret not having started six months from now?'
+    ]
+  };
+  var DECK_CAPTURE = {
+    domain: [['Keep as written','What framing do we all agree on?'], ['Change the framing','Reword the question, horizon, or perspective.'],
+             ['Who or what is missing','People, constraints, or uncertainties to add.'], ['Steering note for driver research','What should Claude weigh or avoid when it researches forces?']],
+    drivers: [['Our two axes — and why','Pick the pair, and name the strongest objection.'], ['Forces to cut, merge, or add','Overlaps, false uncertainties, gaps.'],
+              ['What the futures must reckon with','Constraints or emphases for the scenario stories.'], ['Open disagreements','What we could not settle in the room.']],
+    futures: [['Most and least plausible','Rank the four, and say why.'], ['Fixes to the stories','What rings false? What would make it ring true?'],
+              ['Signals we would really track','Which early signs could we actually observe?'], ['Steering note for concepts','What should the concepts emphasize or avoid?']],
+    concepts: [['Shortlist — and why','Which would we actually build or fund?'], ['Cut','What is fantasy today, or a duplicate?'],
+               ['Missing ideas','What did nobody propose?'], ['Steering note for strategy','What should weigh most in the final sort?']],
+    strategy: [['Agreed no-regrets — with owners','What starts now, and who owns it?'], ['Bucket changes','What moves, and why?'],
+               ['Tripwires and thresholds','What will we measure, and what number changes our minds?'], ['Open questions and next meeting','What do we still not know?']]
+  };
+
+  function stageHasOutput(stage){
+    if (stage === 'domain') return !!(state.domain.problem && state.domain.horizon);
+    if (stage === 'drivers') return state.drivers.items.length > 0;
+    if (stage === 'futures') return state.futures.quadrants.length > 0;
+    if (stage === 'concepts') return state.concepts.list.length > 0;
+    if (stage === 'strategy') return state.strategy.classification.length > 0;
+    return false;
+  }
+  function clip(s, n){
+    s = String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+    if (s.length <= n) return s;
+    var cut = s.slice(0, n), sp = cut.lastIndexOf(' ');
+    if (sp > n * 0.6) cut = cut.slice(0, sp);
+    return cut.replace(/[.,;:\-–—\s]+$/, '') + '…';
+  }
+  function firstSentence(s){
+    s = String(s || '').trim();
+    var m = s.match(/^.*?[.!?](\s|$)/);
+    return m ? m[0].trim() : s;
+  }
+  function conceptById(id){
+    for (var i = 0; i < state.concepts.list.length; i++) if (state.concepts.list[i].id === id) return state.concepts.list[i];
+    return null;
+  }
+  function axisNames(){
+    var a = getDriver(state.drivers.axisIds[0]), b = getDriver(state.drivers.axisIds[1]);
+    if (state.futures.axisA && state.futures.axisB) return [state.futures.axisA.name, state.futures.axisB.name];
+    return (a && b) ? [a.name, b.name] : null;
+  }
+
+  function buildDeck(stage){
+    return Promise.resolve().then(function(){
+      var pptx = new window.PptxGenJS();
+      var SHAPE = pptx.ShapeType;
+      var label = STAGE_LABEL[stage];
+      pptx.layout = 'LAYOUT_WIDE';
+      pptx.title = 'Futures Compass — ' + label + ' discussion deck';
+      pptx.author = 'Futures Compass';
+      pptx.defineSlideMaster({
+        title: 'FC_MASTER',
+        background: {color: PAL.ground},
+        objects: [
+          {rect: {x: 0, y: 0, w: 0.16, h: 7.5, fill: {color: PAL.brass}}},
+          {text: {text: 'FUTURES COMPASS', options: {x: 0.6, y: 7.02, w: 3.2, h: 0.3, fontFace: FNT.mono, fontSize: 9, color: PAL.muted, charSpacing: 3, margin: 0}}}
+        ],
+        slideNumber: {x: 12.2, y: 7.02, w: 0.6, h: 0.3, fontFace: FNT.mono, fontSize: 9, color: PAL.muted, align: 'right'}
+      });
+      var footer = label + '  ·  ' + clip(state.domain.problem, 62);
+
+      function newSlide(eyebrow, title, size){
+        var s = pptx.addSlide({masterName: 'FC_MASTER'});
+        s.addText(String(eyebrow).toUpperCase(), {x: 0.6, y: 0.42, w: 12.1, h: 0.3, fontFace: FNT.mono, fontSize: 11, color: PAL.brass, charSpacing: 3, margin: 0});
+        s.addText(clip(title, 90), {x: 0.6, y: 0.75, w: 12.1, h: 0.95, fontFace: FNT.display, fontSize: size || 28, italic: true, bold: true, color: PAL.ink, valign: 'top', margin: 0});
+        s.addText(footer, {x: 4.0, y: 7.02, w: 8.1, h: 0.3, fontFace: FNT.mono, fontSize: 9, color: PAL.muted, align: 'right', margin: 0});
+        return s;
+      }
+      function rect(s, x, y, w, h, fill, line, lw){
+        s.addShape(SHAPE.rect, {x: x, y: y, w: w, h: h, fill: {color: fill}, line: {color: line || fill, width: lw || 0.75}});
+      }
+      function hcell(text){ return {text: text, options: {bold: true, color: PAL.white, fill: {color: PAL.ink}}}; }
+      var TABLE_OPTS = {fontFace: FNT.body, fontSize: 12, color: PAL.ink, valign: 'middle', border: {type: 'solid', pt: 0.5, color: PAL.border}, fill: {color: PAL.white}};
+
+      // --- title slide
+      var ts = pptx.addSlide({masterName: 'FC_MASTER'});
+      ts.addText('DISCUSSION DECK  ·  STAGE ' + STAGE_NUM[stage] + ' OF 5', {x: 0.9, y: 1.3, w: 11.5, h: 0.4, fontFace: FNT.mono, fontSize: 13, color: PAL.brass, charSpacing: 4, margin: 0});
+      ts.addText(label, {x: 0.9, y: 1.8, w: 11.5, h: 1.4, fontFace: FNT.display, fontSize: 66, italic: true, bold: true, color: PAL.ink, valign: 'top', margin: 0});
+      ts.addShape(SHAPE.line, {x: 0.9, y: 3.4, w: 2.2, h: 0, line: {color: PAL.brass, width: 2.5}});
+      ts.addText(clip(state.domain.problem, 220), {x: 0.9, y: 3.65, w: 10.8, h: 1.5, fontFace: FNT.body, fontSize: 22, color: PAL.soft, valign: 'top', margin: 0});
+      ts.addText('HORIZON  ' + clip(state.domain.horizon, 90), {x: 0.9, y: 5.3, w: 11, h: 0.35, fontFace: FNT.mono, fontSize: 12, color: PAL.muted, margin: 0});
+      ts.addText('Suggested flow for a 25-minute conversation:   5 min read  ·  15 min discuss  ·  5 min capture decisions', {x: 0.9, y: 5.95, w: 11.5, h: 0.4, fontFace: FNT.body, fontSize: 14, color: PAL.teal, margin: 0});
+      ts.addNotes('Facilitator: share this deck a day ahead if you can. In the room, give people five silent minutes with the content slides before opening the discussion.');
+
+      // --- recap slide
+      var rs = newSlide(stage === 'domain' ? 'The framing' : 'Where we are', stage === 'domain' ? 'What we are asking' : 'The question we started from');
+      var recapRows = [['THE QUESTION', state.domain.problem, 22, 1.1, 280], ['THE HORIZON', state.domain.horizon, 20, 0.6, 120],
+                       ['OUR PERSPECTIVE', state.domain.perspective || '—', 15, 1.3, 420]];
+      var axes = axisNames();
+      if (axes && stage !== 'domain' && stage !== 'drivers') recapRows.push(['THE TWO AXES', 'A: ' + axes[0] + '     ×     B: ' + axes[1], 18, 0.7, 160]);
+      var ry = 1.9;
+      recapRows.forEach(function(r){
+        rs.addShape(SHAPE.line, {x: 0.6, y: ry - 0.12, w: 12.1, h: 0, line: {color: PAL.border, width: 0.75}});
+        rs.addText(r[0], {x: 0.6, y: ry, w: 2.4, h: 0.4, fontFace: FNT.mono, fontSize: 11, color: PAL.brass, charSpacing: 3, margin: 0, valign: 'top'});
+        rs.addText(clip(r[1], r[4]), {x: 3.1, y: ry - 0.04, w: 9.6, h: r[3], fontFace: FNT.body, fontSize: r[2], color: PAL.ink, margin: 0, valign: 'top'});
+        ry += r[3] + 0.28;
+      });
+
+      // --- stage content
+      if (stage === 'drivers') addDriverSlides();
+      if (stage === 'futures') addFutureSlides();
+      if (stage === 'concepts') addConceptSlides();
+      if (stage === 'strategy') addStrategySlides();
+
+      function addDriverSlides(){
+        var items = state.drivers.items;
+        var s = newSlide('The forces', 'Where each force lands');
+        var X0 = 1.45, Y0 = 1.8, SZ = 4.5, cell = SZ / 5, i;
+        s.addShape(SHAPE.rect, {x: X0 + cell * 3, y: Y0, w: cell * 2, h: cell * 2, fill: {color: PAL.brassSoft, transparency: 30}, line: {color: PAL.brassSoft, width: 0}});
+        for (i = 0; i <= 5; i++){
+          s.addShape(SHAPE.line, {x: X0 + i * cell, y: Y0, w: 0, h: SZ, line: {color: PAL.border, width: 0.75}});
+          s.addShape(SHAPE.line, {x: X0, y: Y0 + i * cell, w: SZ, h: 0, line: {color: PAL.border, width: 0.75}});
+        }
+        for (i = 1; i <= 5; i++){
+          s.addText(String(i), {x: X0 + (i - 0.5) * cell - 0.2, y: Y0 + SZ + 0.04, w: 0.4, h: 0.25, align: 'center', fontFace: FNT.mono, fontSize: 9, color: PAL.muted, margin: 0});
+          s.addText(String(i), {x: X0 - 0.35, y: Y0 + SZ - (i - 0.5) * cell - 0.125, w: 0.25, h: 0.25, align: 'center', fontFace: FNT.mono, fontSize: 9, color: PAL.muted, margin: 0});
+        }
+        s.addText('UNCERTAINTY  →', {x: X0, y: Y0 + SZ + 0.32, w: SZ, h: 0.3, align: 'center', fontFace: FNT.mono, fontSize: 10, color: PAL.teal, charSpacing: 3, margin: 0});
+        s.addText('IMPACT  →', {x: 0.1, y: Y0 + SZ / 2 - 0.15, w: 1.3, h: 0.3, align: 'center', rotate: 270, fontFace: FNT.mono, fontSize: 10, color: PAL.brass, charSpacing: 3, margin: 0});
+        var groups = {};
+        items.forEach(function(d, idx){ var k = d.impact + '|' + d.uncertainty; (groups[k] = groups[k] || []).push(idx); });
+        items.forEach(function(d, idx){
+          var g = groups[d.impact + '|' + d.uncertainty], n = g.length, pos = g.indexOf(idx);
+          var cols = Math.ceil(Math.sqrt(n)), rows = Math.ceil(n / cols), step = 0.34;
+          var cx = X0 + (d.uncertainty - 0.5) * cell + ((pos % cols) - (cols - 1) / 2) * step;
+          var cy = Y0 + SZ - (d.impact - 0.5) * cell + (Math.floor(pos / cols) - (rows - 1) / 2) * step;
+          var isAxis = state.drivers.axisIds.indexOf(d.id) >= 0;
+          s.addShape(SHAPE.ellipse, {x: cx - 0.16, y: cy - 0.16, w: 0.32, h: 0.32, fill: {color: isAxis ? PAL.brass : PAL.teal}, line: {color: PAL.white, width: 1}});
+          s.addText(String(idx + 1), {x: cx - 0.16, y: cy - 0.16, w: 0.32, h: 0.32, align: 'center', valign: 'middle', fontFace: FNT.body, fontSize: 10, bold: true, color: PAL.white, margin: 0});
+        });
+        var legend = [];
+        items.forEach(function(d, idx){
+          var isAxis = state.drivers.axisIds.indexOf(d.id) >= 0;
+          legend.push({text: String(idx + 1) + (idx + 1 < 10 ? ' ' : '') + '   ', options: {fontFace: FNT.mono, bold: true, color: isAxis ? PAL.brass : PAL.teal}});
+          legend.push({text: clip(d.name, 46) + (isAxis ? '    ★ axis' : ''), options: {color: PAL.ink, bold: isAxis, breakLine: true}});
+        });
+        s.addText(legend, {x: 6.5, y: 1.8, w: 6.2, h: 4.2, fontFace: FNT.body, fontSize: 14, valign: 'top', margin: 0, paraSpaceAfter: 7});
+        s.addText('Shaded corner = high impact and high uncertainty: the natural candidates for our two axes.' + (state.drivers.axisIds.length ? '  ★ marks the current picks.' : ''),
+                  {x: 6.5, y: 6.1, w: 6.2, h: 0.6, fontFace: FNT.body, fontSize: 11, italic: true, color: PAL.muted, valign: 'top', margin: 0});
+        s.addNotes('Ask the group to find their own top-right corner before you reveal the current picks.');
+
+        for (var start = 0; start < items.length; start += 8){
+          var chunk = items.slice(start, start + 8);
+          var ds = newSlide('The forces, in words', items.length > 8 ? 'What each force means  (' + (start / 8 + 1) + ' of ' + Math.ceil(items.length / 8) + ')' : 'What each force means');
+          var rows2 = [[hcell('#'), hcell('Force'), hcell('Impact'), hcell('Uncertainty'), hcell('Why it matters')]];
+          chunk.forEach(function(d, k){
+            rows2.push([{text: String(start + k + 1), options: {align: 'center', bold: true}}, {text: clip(d.name, 48), options: {bold: true}},
+                        {text: d.impact + ' / 5', options: {align: 'center'}}, {text: d.uncertainty + ' / 5', options: {align: 'center'}}, clip(d.description, 170)]);
+          });
+          ds.addTable(rows2, Object.assign({}, TABLE_OPTS, {x: 0.6, y: 1.8, w: 12.1, colW: [0.5, 2.9, 0.9, 1.2, 6.6], fontSize: 13}));
+        }
+      }
+
+      function addFutureSlides(){
+        var f = state.futures, ax = axisNames() || ['Axis A', 'Axis B'];
+        var order = [findQuad('high', 'high'), findQuad('low', 'high'), findQuad('high', 'low'), findQuad('low', 'low')];
+        var s = newSlide('Axis A (columns): ' + clip(ax[0], 40) + '   ·   Axis B (rows): ' + clip(ax[1], 40), 'The four futures');
+        var colX = [1.6, 7.1], rowY = [2.2, 4.6], W = 5.4, H = 2.25;
+        s.addText(clip(f.axisA.poleHigh, 40), {x: colX[0], y: 1.78, w: W, h: 0.32, align: 'center', fontFace: FNT.body, fontSize: 12, bold: true, color: PAL.brass, margin: 0});
+        s.addText(clip(f.axisA.poleLow, 40), {x: colX[1], y: 1.78, w: W, h: 0.32, align: 'center', fontFace: FNT.body, fontSize: 12, bold: true, color: PAL.brass, margin: 0});
+        s.addText(clip(f.axisB.poleHigh, 34), {x: 1.15 - 1.1, y: rowY[0] + H / 2 - 0.16, w: 2.2, h: 0.32, align: 'center', rotate: 270, fontFace: FNT.body, fontSize: 12, bold: true, color: PAL.teal, margin: 0});
+        s.addText(clip(f.axisB.poleLow, 34), {x: 1.15 - 1.1, y: rowY[1] + H / 2 - 0.16, w: 2.2, h: 0.32, align: 'center', rotate: 270, fontFace: FNT.body, fontSize: 12, bold: true, color: PAL.teal, margin: 0});
+        order.forEach(function(q, idx){
+          var x = colX[idx % 2], y = rowY[Math.floor(idx / 2)];
+          rect(s, x, y, W, H, PAL.white, PAL.border);
+          if (!q) return;
+          s.addText([
+            {text: clip(q.title, 60), options: {fontFace: FNT.display, fontSize: 18, bold: true, italic: true, color: PAL.ink, breakLine: true, paraSpaceAfter: 6}},
+            {text: clip(q.narrative, 330), options: {fontFace: FNT.body, fontSize: 12.5, color: PAL.soft}}
+          ], {x: x, y: y, w: W, h: H, valign: 'top', margin: [10, 14, 8, 14]});
+        });
+        s.addNotes('Read the four titles aloud. Ask: which one did you NOT want to be true? That is usually the one worth the most discussion.');
+
+        order.forEach(function(q, idx){
+          if (!q) return;
+          var fs = newSlide('Future ' + (idx + 1) + ' of 4   ·   ' + clip(q.axisAPole === 'high' ? f.axisA.poleHigh : f.axisA.poleLow, 30) + '  ×  ' + clip(q.axisBPole === 'high' ? f.axisB.poleHigh : f.axisB.poleLow, 30), q.title, 30);
+          fs.addText(clip(q.narrative, 760), {x: 0.6, y: 1.85, w: 7.5, h: 4.9, fontFace: FNT.body, fontSize: 18, color: PAL.ink, valign: 'top', margin: 0, lineSpacingMultiple: 1.15});
+          rect(fs, 8.5, 1.85, 4.2, 2.7, PAL.surface, PAL.border);
+          var sig = [{text: 'SIGNALS WE WOULD SEE FIRST', options: {fontFace: FNT.mono, fontSize: 10, bold: true, color: PAL.teal, charSpacing: 2, breakLine: true, paraSpaceAfter: 8}}];
+          (q.signals.length ? q.signals : ['(none listed)']).slice(0, 4).forEach(function(t){
+            sig.push({text: clip(t, 105), options: {fontFace: FNT.body, fontSize: 12.5, color: PAL.ink, bullet: true, breakLine: true, paraSpaceAfter: 6}});
+          });
+          fs.addText(sig, {x: 8.5, y: 1.85, w: 4.2, h: 2.7, valign: 'top', margin: [12, 14, 8, 14]});
+          if (q.critique){
+            rect(fs, 8.5, 4.75, 4.2, 2.0, PAL.vermSoft, PAL.verm);
+            fs.addText([{text: 'THE CRITIC SAYS', options: {fontFace: FNT.mono, fontSize: 10, bold: true, color: PAL.verm, charSpacing: 2, breakLine: true, paraSpaceAfter: 6}},
+                        {text: clip(q.critique, 300), options: {fontFace: FNT.body, fontSize: 12, color: PAL.ink}}],
+                       {x: 8.5, y: 4.75, w: 4.2, h: 2.0, valign: 'top', margin: [12, 14, 8, 14]});
+          }
+        });
+      }
+
+      function addConceptSlides(){
+        var quads = [findQuad('high', 'high'), findQuad('low', 'high'), findQuad('high', 'low'), findQuad('low', 'low')].filter(Boolean);
+        quads.forEach(function(q, qi){
+          var cs = state.concepts.list.filter(function(c){ return c.scenarioId === q.id; });
+          for (var start = 0; start < cs.length; start += 3){
+            var chunk = cs.slice(start, start + 3);
+            var s = newSlide('Concepts   ·   Future ' + (qi + 1) + ' of ' + quads.length + (cs.length > 3 ? '   (' + (start / 3 + 1) + ')' : ''), q.title, 28);
+            chunk.forEach(function(c, k){
+              var x = 0.6 + k * 4.1, y = 1.85, w = 3.9, h = 4.9;
+              rect(s, x, y, w, h, PAL.white, PAL.border);
+              rect(s, x, y, w, 0.34, c.shortlisted ? PAL.brass : PAL.surface, c.shortlisted ? PAL.brass : PAL.border);
+              s.addText(c.shortlisted ? 'SHORTLISTED' : 'CONCEPT ' + (start + k + 1), {x: x + 0.14, y: y, w: w - 0.28, h: 0.34, valign: 'middle', fontFace: FNT.mono, fontSize: 9.5, bold: true, color: c.shortlisted ? PAL.white : PAL.muted, charSpacing: 2, margin: 0});
+              s.addText([
+                {text: clip(c.name, 70), options: {fontFace: FNT.body, fontSize: 18, bold: true, color: PAL.ink, breakLine: true, paraSpaceAfter: 10}},
+                {text: clip(c.pitch, 330), options: {fontFace: FNT.body, fontSize: 14, color: PAL.soft, breakLine: true, paraSpaceAfter: 10}},
+                {text: 'Why this world: ' + clip(c.whyThisWorld, 170), options: {fontFace: FNT.body, fontSize: 12, italic: true, color: PAL.muted}}
+              ], {x: x, y: y + 0.4, w: w, h: h - 0.4, valign: 'top', margin: [10, 14, 8, 14]});
+            });
+          }
+        });
+      }
+
+      function addStrategySlides(){
+        var cls = state.strategy.classification;
+        var s = newSlide('The strategy board', 'What to do now, and what to wait on');
+        BUCKETS.forEach(function(b, i){
+          var x = 0.6 + i * 3.04, w = 2.92;
+          var items = cls.filter(function(c){ return c.bucket === b[0]; });
+          rect(s, x, 1.85, w, 0.5, b[3], b[3]);
+          s.addText(b[1] + '  (' + items.length + ')', {x: x + 0.12, y: 1.85, w: w - 0.24, h: 0.5, valign: 'middle', fontFace: FNT.mono, fontSize: 12, bold: true, color: PAL.white, charSpacing: 2, margin: 0});
+          s.addText(b[2], {x: x, y: 2.4, w: w, h: 0.5, valign: 'top', fontFace: FNT.body, fontSize: 10, italic: true, color: PAL.muted, margin: 0});
+          var shown = items.slice(0, 4), n = shown.length, ch = n ? Math.min(1.2, (3.8 - (n - 1) * 0.1) / n) : 0;
+          shown.forEach(function(it, k){
+            var c = conceptById(it.conceptId), cy = 3.0 + k * (ch + 0.1);
+            rect(s, x, cy, w, ch, PAL.white, PAL.border);
+            s.addText([{text: clip(c ? c.name : it.conceptId, 44), options: {fontFace: FNT.body, fontSize: 11, bold: true, color: PAL.ink, breakLine: true, paraSpaceAfter: 3}},
+                       {text: clip(it.rationale, n <= 2 ? 150 : n === 3 ? 120 : 90), options: {fontFace: FNT.body, fontSize: 9.5, color: PAL.muted}}],
+                      {x: x, y: cy, w: w, h: ch, valign: 'top', margin: [6, 9, 4, 9]});
+          });
+          if (items.length > 4) s.addText('+ ' + (items.length - 4) + ' more — see next slide', {x: x, y: 6.62, w: w, h: 0.25, fontFace: FNT.body, fontSize: 9, italic: true, color: PAL.muted, margin: 0});
+        });
+        s.addNotes('Before showing the buckets, ask the room to guess which one or two items are no-regrets. Then compare.');
+
+        for (var start = 0; start < cls.length; start += 5){
+          var chunk = cls.slice(start, start + 5);
+          var ts2 = newSlide('The reasoning', cls.length > 5 ? 'Why each item landed where it did  (' + (start / 5 + 1) + ' of ' + Math.ceil(cls.length / 5) + ')' : 'Why each item landed where it did');
+          var rows3 = [[hcell('Concept'), hcell('Bucket'), hcell('From future'), hcell('Rationale')]];
+          chunk.forEach(function(it){
+            var c = conceptById(it.conceptId), bucket = BUCKETS.filter(function(b){ return b[0] === it.bucket; })[0];
+            rows3.push([{text: clip(c ? c.name : it.conceptId, 50), options: {bold: true}}, {text: bucket ? bucket[1] : String(it.bucket).toUpperCase(), options: {bold: true, color: bucket ? bucket[3] : PAL.ink}},
+                        clip(c ? quadTitleById(c.scenarioId) : '', 46), clip(it.rationale, 210)]);
+          });
+          ts2.addTable(rows3, Object.assign({x: 0.6, y: 1.8, w: 12.1, colW: [3.0, 1.4, 2.5, 5.2]}, TABLE_OPTS));
+        }
+
+        if (state.strategy.threads.length){
+          var th = newSlide('Across all four futures', 'Threads that hold in every world');
+          state.strategy.threads.slice(0, 4).forEach(function(t, i){
+            var x = 0.6 + (i % 2) * 6.15, y = 1.85 + Math.floor(i / 2) * 2.55;
+            rect(th, x, y, 5.95, 2.4, PAL.white, PAL.border);
+            th.addText([{text: clip(t.name, 60), options: {fontFace: FNT.display, fontSize: 18, italic: true, bold: true, color: PAL.ink, breakLine: true, paraSpaceAfter: 8}},
+                        {text: clip(t.description, 280), options: {fontFace: FNT.body, fontSize: 13, color: PAL.soft}}],
+                       {x: x, y: y, w: 5.95, h: 2.4, valign: 'top', margin: [12, 16, 8, 16]});
+          });
+        }
+        var tws = state.strategy.tripwires;
+        for (var st = 0; st < tws.length; st += 5){
+          var tchunk = tws.slice(st, st + 5);
+          var tw = newSlide('Tripwires', tws.length > 5 ? 'What we would watch, and what it would tell us  (' + (st / 5 + 1) + ' of ' + Math.ceil(tws.length / 5) + ')' : 'What we would watch, and what it would tell us');
+          var rows4 = [[hcell('Signal'), hcell('Why it matters'), hcell('Currently trending')]];
+          tchunk.forEach(function(t){ rows4.push([{text: clip(t.signal, 120), options: {bold: true}}, clip(t.whyItMatters, 190), clip(t.currentGuess, 150)]); });
+          tw.addTable(rows4, Object.assign({x: 0.6, y: 1.8, w: 12.1, colW: [3.8, 4.7, 3.6]}, TABLE_OPTS));
+        }
+      }
+
+      // --- discussion prompts
+      var ps = newSlide('Discussion', 'Questions for the room');
+      var pr = [];
+      DECK_PROMPTS[stage].forEach(function(q){
+        pr.push({text: q, options: {color: PAL.ink, bullet: {type: 'number', indent: 34}, breakLine: true}});
+      });
+      ps.addText(pr, {x: 0.6, y: 1.85, w: 7.9, h: 4.9, fontFace: FNT.body, fontSize: 20, valign: 'top', margin: 0, paraSpaceAfter: 18});
+      rect(ps, 9.0, 1.85, 3.7, 2.9, PAL.surface, PAL.border);
+      ps.addText([{text: 'A 25-MINUTE FLOW', options: {fontFace: FNT.mono, fontSize: 10, bold: true, color: PAL.teal, charSpacing: 2, breakLine: true, paraSpaceAfter: 10}},
+                  {text: '0 – 5 min', options: {bold: true, color: PAL.ink, breakLine: true}}, {text: 'Read the slides in silence', options: {color: PAL.soft, breakLine: true, paraSpaceAfter: 10}},
+                  {text: '5 – 20 min', options: {bold: true, color: PAL.ink, breakLine: true}}, {text: 'Work through the questions', options: {color: PAL.soft, breakLine: true, paraSpaceAfter: 10}},
+                  {text: '20 – 25 min', options: {bold: true, color: PAL.ink, breakLine: true}}, {text: 'Fill in the last slide, out loud', options: {color: PAL.soft}}],
+                 {x: 9.0, y: 1.85, w: 3.7, h: 2.9, fontFace: FNT.body, fontSize: 14, valign: 'top', margin: [14, 16, 8, 16]});
+      ps.addNotes('Disagreement is the point. If everyone agrees quickly, ask who would argue the opposite. Record the disagreements, not only the decisions — they steer the next pass.');
+
+      // --- capture slide
+      var cs2 = newSlide('Capture', 'What did the group decide?');
+      DECK_CAPTURE[stage].forEach(function(b, i){
+        var x = 0.6 + (i % 2) * 6.15, y = 1.85 + Math.floor(i / 2) * 2.5;
+        rect(cs2, x, y, 5.95, 2.35, PAL.white, PAL.border, 1);
+        cs2.addText([{text: b[0].toUpperCase(), options: {fontFace: FNT.mono, fontSize: 10.5, bold: true, color: PAL.brass, charSpacing: 2, breakLine: true, paraSpaceAfter: 4}},
+                     {text: b[1], options: {fontFace: FNT.body, fontSize: 11, italic: true, color: PAL.muted}}],
+                    {x: x, y: y, w: 5.95, h: 2.35, valign: 'top', margin: [10, 14, 6, 14]});
+      });
+      cs2.addNotes('Capture decisions while people are still in the room. Afterwards, upload the transcript or paste these notes into Futures Compass: they become the steering notes for the next pass.');
+
+      return pptx.write({outputType: 'blob'});
+    });
+  }
+
+  var deckBusy = false;
+  function setDeckStatus(msg, isErr){
+    var n = document.getElementById('deck-status');
+    if (n){ n.textContent = msg; n.className = 'mini' + (isErr ? ' err' : ''); }
+  }
+  function exportDeck(stage){
+    if (deckBusy) return;
+    if (!window.PptxGenJS){ setDeckStatus('The deck builder didn’t load — check your connection and reload the page.', true); return; }
+    if (!downloadsApi){ setDeckStatus('Saving files isn’t available in this view.', true); return; }
+    deckBusy = true;
+    var btn = document.getElementById('deck-btn');
+    if (btn) btn.disabled = true;
+    setDeckStatus('Building the deck… this can take up to 30 seconds.');
+    buildDeck(stage).then(function(blob){
+      return downloadsApi.save({filename: 'futures-compass-' + stage + '-' + slug(state.domain.problem) + '.pptx', data: blob});
+    }).then(function(){
+      setDeckStatus('Saved. Take it to the discussion, then come back and add what the group decided.');
+    }).catch(function(e){
+      var code = e && e.code;
+      if (code === 'declined') setDeckStatus('Save cancelled.');
+      else if (code === 'rejected_extension' || code === 'extension_not_enabled') setDeckStatus('.pptx files can’t be saved from this view.', true);
+      else { setDeckStatus('Couldn’t build or save the deck — try again.', true); try{ console.error(e); }catch(_){} }
+    }).then(function(){
+      deckBusy = false;
+      var b2 = document.getElementById('deck-btn');
+      if (b2) b2.disabled = false;
+    });
+  }
+
+  function buildDiscussBlock(stage){
+    var ok = stageHasOutput(stage);
+    var box = el('div', {class: 'rail-block discuss'});
+    box.appendChild(el('h3', {}, 'Take it to the room'));
+    box.appendChild(el('p', {class: 'mini'}, ok
+      ? 'One click turns this stage into a short deck: the output, a few questions, and a page to capture what the group decides. Built for a 20–30 minute conversation.'
+      : 'Once this stage has output, you can turn it into a discussion deck here.'));
+    box.appendChild(el('button', {class: 'btn small', id: 'deck-btn', disabled: !ok, onclick: function(){ exportDeck(stage); }}, 'Export discussion deck (.pptx)'));
+    box.appendChild(el('p', {class: 'mini', id: 'deck-status', role: 'status'}, ''));
+    return box;
+  }
+
+  // ---------- Bring the discussion back ----------
+  var transcriptDrafts = {};
+  var transcriptOpen = {};
+  var MAX_TRANSCRIPT = 42000;
+
+  function cleanTranscript(raw){
+    var t = String(raw || '').replace(/\r/g, '');
+    t = t.replace(/^WEBVTT.*$/m, '');
+    t = t.replace(/^\s*\d+\s*$/gm, '');
+    t = t.replace(/^\s*\d{1,2}:\d{2}(:\d{2})?[.,]?\d*\s*-->.*$/gm, '');
+    t = t.replace(/^\s*\[?\d{1,2}:\d{2}(:\d{2})?\]?\s*$/gm, '');
+    t = t.replace(/<[^>]+>/g, '');
+    return t.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  }
+  function captureNotes(stage){
+    if (stage === 'domain' || !state[stage]) return;
+    var ta = document.getElementById(stage + '-notes');
+    if (ta) state[stage].notes = ta.value;
+  }
+  function stageSnapshot(stage){
+    if (stage === 'domain') return 'The group was shown the framing: the problem space, time horizon, and perspective above.';
+    if (stage === 'drivers'){
+      var axes = state.drivers.axisIds.map(function(id){ var d = getDriver(id); return d ? d.name : ''; }).filter(Boolean);
+      return 'The group was shown these driving forces (impact/uncertainty out of 5):\n' +
+        state.drivers.items.map(function(d, i){ return (i + 1) + '. ' + d.name + ' (' + d.impact + '/' + d.uncertainty + ')'; }).join('\n') +
+        (axes.length ? '\nCurrently chosen axes: ' + axes.join(' and ') : '');
+    }
+    if (stage === 'futures') return 'The group was shown these four futures:\n' + state.futures.quadrants.map(function(q, i){ return (i + 1) + '. ' + q.title + ' — ' + firstSentence(q.narrative); }).join('\n');
+    if (stage === 'concepts') return 'The group was shown these concepts (* = shortlisted):\n' + state.concepts.list.map(function(c){ return '- ' + (c.shortlisted ? '* ' : '') + c.name + ' (future: ' + quadTitleById(c.scenarioId) + ')'; }).join('\n');
+    return 'The group was shown this strategy board:\n' + state.strategy.classification.map(function(it){ var c = conceptById(it.conceptId); return '- ' + (c ? c.name : it.conceptId) + ': ' + it.bucket; }).join('\n') +
+      '\nTripwires: ' + state.strategy.tripwires.map(function(t){ return t.signal; }).join('; ');
+  }
+  function buildDigestPrompt(stage, transcript, truncated){
+    var next = STAGE_NEXT[stage];
+    return "You are a facilitator's assistant for a scenario-planning exercise. A team just discussed the output of one stage. Turn the messy transcript of that discussion into clear steering input for an AI planning tool.\n\n" +
+      domainBlock() + "\n\nSTAGE DISCUSSED: " + STAGE_LABEL[stage] + "\n" + stageSnapshot(stage) + "\n\n" +
+      "TRANSCRIPT" + (truncated ? " (cut off at the length limit — the end of the discussion is missing)" : "") + "\n" +
+      "It may contain timestamps, speaker labels, filler words, and transcription errors. If a force, future, or concept is garbled, map it to the closest item shown above.\n---\n" + transcript + "\n---\n\n" +
+      "TASK\nReport only what the transcript supports. If the group did not settle something, list it under openQuestions instead of inventing a decision. Keep each list item under 25 words.\n" +
+      "- decisions: what the group decided or clearly leaned toward\n- disagreements: where they split, and the competing positions\n- openQuestions: what remained unresolved\n" +
+      "- steerThisStage: 1-4 imperative sentences telling the AI how to revise THIS stage's output (empty string if the group wanted it kept as is)\n" +
+      "- steerNextStage: 1-4 imperative sentences of guidance for the AI when it produces the " + (next ? STAGE_LABEL[next].toUpperCase() + " stage" : "next step") + " — emphases, constraints, things to avoid, reflecting the group's priorities (empty string if none" + (next ? "" : "; this is the final stage") + ")\n\n" +
+      "Reply with only this JSON shape, no other text:\n{\"decisions\":[\"...\"],\"disagreements\":[\"...\"],\"openQuestions\":[\"...\"],\"steerThisStage\":\"...\",\"steerNextStage\":\"...\"}";
+  }
+  function strList(x){ return Array.isArray(x) ? x.map(function(s){ return String(s).trim(); }).filter(Boolean).slice(0, 8) : []; }
+  function mergeNote(existing, previouslyApplied, fresh){
+    existing = existing || '';
+    if (previouslyApplied && existing.indexOf(previouslyApplied) >= 0) existing = existing.replace(previouslyApplied, '').replace(/\n{3,}/g, '\n\n').trim();
+    if (!fresh) return existing;
+    return existing ? existing + '\n\n' + fresh : fresh;
+  }
+  function distillTranscript(stage){
+    var ta = document.getElementById('transcript-' + stage);
+    var raw = ta ? ta.value : (transcriptDrafts[stage] || '');
+    transcriptDrafts[stage] = raw;
+    transcriptOpen[stage] = true;
+    captureNotes(stage);
+    var text = cleanTranscript(raw);
+    if (text.length < 80){
+      state.lastError = 'That transcript looks too short to summarize — upload or paste the full text.';
+      render();
+      return;
+    }
+    var truncated = false;
+    if (text.length > MAX_TRANSCRIPT){ text = text.slice(0, MAX_TRANSCRIPT); truncated = true; }
+    withBusy('Reading the discussion…', function(signal, onStream){
+      return callSample({prompt: buildDigestPrompt(stage, text, truncated), asJson: true, signal: signal, onStream: onStream}).then(function(d){
+        d = d || {};
+        var prev = state.digests[stage] || {};
+        var next = STAGE_NEXT[stage];
+        var thisText = d.steerThisStage ? 'From the team discussion: ' + String(d.steerThisStage).trim() : '';
+        var nextText = (next && d.steerNextStage) ? 'From the team discussion: ' + String(d.steerNextStage).trim() : '';
+        if (stage !== 'domain') state[stage].notes = mergeNote(state[stage].notes, prev.appliedThis, thisText);
+        if (next) state[next].notes = mergeNote(state[next].notes, prev.appliedNext, nextText);
+        state.digests[stage] = {
+          decisions: strList(d.decisions), disagreements: strList(d.disagreements), openQuestions: strList(d.openQuestions),
+          steerThisStage: String(d.steerThisStage || '').trim(), steerNextStage: String(d.steerNextStage || '').trim(),
+          appliedThis: stage !== 'domain' ? thisText : '', appliedNext: nextText, truncated: truncated
+        };
+      });
+    });
+  }
+
+  function setTranscriptMsg(stage, msg, isErr){
+    var n = document.getElementById('transcript-msg-' + stage);
+    if (n){ n.textContent = msg; n.className = 'mini' + (isErr ? ' err' : ''); }
+  }
+  var AUDIO_EXT = ['mp3', 'm4a', 'wav', 'aac', 'ogg', 'flac', 'mp4', 'mov', 'webm', 'aiff'];
+
+  function digestList(title, items){
+    if (!items || !items.length) return null;
+    return el('div', {}, el('h4', {}, title), el('ul', {}, items.map(function(t){ return el('li', {}, t); })));
+  }
+
+  function buildTranscriptSection(stage){
+    var d = state.digests[stage];
+    var det = el('details', {class: 'transcript'});
+    if (transcriptOpen[stage] || d) det.setAttribute('open', '');
+    det.addEventListener('toggle', function(){ transcriptOpen[stage] = det.open; });
+    det.appendChild(el('summary', {}, 'Bring back the group’s discussion'));
+    det.appendChild(el('p', {class: 'mini'}, 'Upload or paste a transcript (.txt, .vtt, .srt) from Zoom, Meet, Otter, or any transcription tool. Claude pulls out the decisions and drafts steering notes you can edit.'));
+
+    var ta = el('textarea', {id: 'transcript-' + stage, rows: '5', placeholder: 'Paste the transcript here, or choose a file below…'}, transcriptDrafts[stage] || '');
+    var fileInput = el('input', {type: 'file', accept: '.txt,.vtt,.srt,.md,text/plain', 'aria-label': 'Upload a transcript file'});
+    fileInput.addEventListener('change', function(e){
+      var f = e.target.files && e.target.files[0];
+      if (!f) return;
+      var ext = (f.name.split('.').pop() || '').toLowerCase();
+      if (/^(audio|video)\//.test(f.type) || AUDIO_EXT.indexOf(ext) >= 0){
+        setTranscriptMsg(stage, 'Audio can’t be read here. Transcribe the recording first (Zoom, Meet, Otter, or Whisper all work), then upload the text.', true);
+        e.target.value = '';
+        return;
+      }
+      var r = new FileReader();
+      r.onload = function(){
+        ta.value = String(r.result || '');
+        transcriptDrafts[stage] = ta.value;
+        setTranscriptMsg(stage, f.name + ' loaded — ' + ta.value.length.toLocaleString() + ' characters.');
+      };
+      r.onerror = function(){ setTranscriptMsg(stage, 'Couldn’t read that file — try pasting the text instead.', true); };
+      r.readAsText(f);
+    });
+    det.appendChild(ta);
+    det.appendChild(el('div', {class: 'file-row'}, fileInput));
+    det.appendChild(el('p', {class: 'mini', id: 'transcript-msg-' + stage, role: 'status'}, ''));
+    det.appendChild(el('div', {class: 'btn-row'},
+      el('button', {class: 'btn small', disabled: state.busy || state.aiUnavailable, onclick: function(){ distillTranscript(stage); }}, 'Summarize the discussion'),
+      timeHint(state.aiUnavailable ? 'needs Claude access' : 'usually 15-30 seconds')
+    ));
+
+    if (d){
+      var dg = el('div', {class: 'digest'});
+      [digestList('Decided', d.decisions), digestList('Disagreed on', d.disagreements), digestList('Still open', d.openQuestions)].forEach(function(n){ appendMaybe(dg, n); });
+      var routed = [];
+      var next = STAGE_NEXT[stage];
+      if (stage !== 'domain' && d.appliedThis) routed.push('Added to the steering notes above — edit before you regenerate.');
+      if (stage === 'domain' && d.steerThisStage) routed.push('Suggested framing changes: ' + d.steerThisStage);
+      if (next && d.appliedNext) routed.push('Added to the ' + STAGE_LABEL[next] + ' steering notes, ready when you get there.');
+      if (d.truncated) routed.push('The transcript was long, so the last part was left out.');
+      routed.forEach(function(t){ dg.appendChild(el('p', {class: 'routed'}, t)); });
+      det.appendChild(dg);
+    }
+    return det;
+  }
+
+  function buildDomainRail(){
+    var box = el('div', {class: 'rail-block'});
+    box.appendChild(el('h3', {}, 'After the discussion'));
+    box.appendChild(el('p', {class: 'mini'}, 'Edit the fields on the left to reflect the group’s call. Anything the group wants Claude to weigh when it researches the drivers can be added here.'));
+    box.appendChild(buildTranscriptSection('domain'));
+    return box;
+  }
+
+  // --- Voyage log (always visible) ---
+  function buildLog(){
+    var box = el('div', {class:'rail-block'});
+    box.appendChild(el('h3', {}, 'Voyage log'));
+    var items = [];
+    if (state.domain.problem) items.push(el('div', {class:'log-item'}, el('b',{},'Domain'), state.domain.problem));
+    if (state.drivers.axisIds.length === 2){
+      var a = getDriver(state.drivers.axisIds[0]), b = getDriver(state.drivers.axisIds[1]);
+      items.push(el('div', {class:'log-item'}, el('b',{},'Axes'), (a?a.name:'') + ' × ' + (b?b.name:'')));
+    }
+    if (state.futures.quadrants.length) items.push(el('div', {class:'log-item'}, el('b',{},'Futures'), state.futures.quadrants.map(function(q){return q.title;}).join(' · ')));
+    var shortlisted = state.concepts.list.filter(function(c){return c.shortlisted;});
+    if (shortlisted.length) items.push(el('div', {class:'log-item'}, el('b',{},'Shortlisted concepts'), shortlisted.map(function(c){return c.name;}).join(', ')));
+    if (state.strategy.classification.length) items.push(el('div', {class:'log-item'}, el('b',{},'Strategy'), state.strategy.classification.length + ' concepts classified, ' + state.strategy.tripwires.length + ' tripwires'));
+    if (!items.length) items.push(el('div', {class:'log-empty'}, 'Nothing charted yet.'));
+    items.forEach(function(i){ box.appendChild(i); });
+    return box;
+  }
+
+  function renderCanvas(){
+    var canvasEl = document.getElementById('canvas');
+    canvasEl.innerHTML = '';
+    var builders = {domain:buildDomainCanvas, drivers:buildDriversCanvas, futures:buildFuturesCanvas, concepts:buildConceptsCanvas, strategy:buildStrategyCanvas};
+    canvasEl.appendChild(builders[state.stage]());
+  }
+
+  function renderRail(){
+    var railEl = document.getElementById('rail');
+    railEl.innerHTML = '';
+    var builders = {drivers:buildDriversRail, futures:buildFuturesRail, concepts:buildConceptsRail, strategy:buildStrategyRail};
+    railEl.appendChild(buildDiscussBlock(state.stage));
+    if (builders[state.stage]){
+      var box = builders[state.stage]();
+      var notesTa = box.querySelector('textarea');
+      if (notesTa) box.insertBefore(el('p', {class: 'mini'}, 'Your guidance, or what the group decided. Claude reads it the next time this stage runs; summarizing a discussion (below) fills it in for you.'), notesTa);
+      box.appendChild(buildTranscriptSection(state.stage));
+      railEl.appendChild(box);
+    } else if (state.stage === 'domain'){
+      railEl.appendChild(buildDomainRail());
+    }
+    railEl.appendChild(buildLog());
+  }
+
+  function render(){
+    renderCourse();
+    renderCanvas();
+    renderRail();
+    renderWire();
+    renderBanner();
+    saveLocal();
+  }
+
+  document.getElementById('reset-btn').addEventListener('click', resetApp);
+
+  render();
+  Promise.all([useCap('sample'), useCap('downloads')]).then(function(res){
+    sampleApi = res[0]; downloadsApi = res[1];
+    if (!sampleApi){
+      state.aiUnavailable = true;
+      state.aiUnavailableReason = "This page isn't running with Claude access — each stage below runs manually.";
+    }
+    render();
+  });
+})();
+</script>
+
+
