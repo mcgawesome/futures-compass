@@ -184,6 +184,14 @@
   .mini{font-size:.78rem; color:var(--muted); line-height:1.45; margin:0 0 10px;}
   .mini.err{color:var(--vermilion);}
   .discuss .btn{width:100%;}
+  .art{border-radius:8px; overflow:hidden; border:1px solid var(--border); background:var(--surface); margin-bottom:12px; aspect-ratio:8/5;}
+  .art img{display:block; width:100%; height:100%; object-fit:cover;}
+  .art.sketch{aspect-ratio:3/2; background:#ffffff;}
+  .art.sketch img{object-fit:contain;}
+  .art-empty{display:flex; align-items:center; justify-content:center; height:100%; font-family:var(--font-mono); font-size:.66rem; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; text-align:center; padding:8px;}
+  .art-bar{display:flex; gap:14px; align-items:center; flex-wrap:wrap; padding:12px 14px; margin-bottom:18px; background:var(--surface-2); border:1px dashed var(--border); border-radius:8px;}
+  .art-bar p{margin:0; font-size:.82rem; color:var(--ink-soft); flex:1; min-width:220px; line-height:1.45;}
+  .concept-card .btn{margin-top:10px;}
   .discuss .mini:last-child{margin:10px 0 0;}
   details.transcript{margin-top:14px; border-top:1px dashed var(--border); padding-top:12px;}
   details.transcript summary{cursor:pointer; font-weight:600; font-size:.85rem; color:var(--teal);}
@@ -242,8 +250,8 @@
   var STAGES = [
     {key:'domain', label:'Domain', num:'01', time:'~2 min', blurb:'Describe the problem space and horizon yourself.'},
     {key:'drivers', label:'Drivers', num:'02', time:'~1-2 min', blurb:'Claude researches forces, then you pick two as axes.'},
-    {key:'futures', label:'Futures', num:'03', time:'~1 min', blurb:'Claude drafts four "in a world where..." stories.'},
-    {key:'concepts', label:'Concepts', num:'04', time:'~1 min', blurb:'Claude proposes ideas per future; you shortlist.'},
+    {key:'futures', label:'Futures', num:'03', time:'~2 min', blurb:'Claude drafts four "in a world where..." stories.'},
+    {key:'concepts', label:'Concepts', num:'04', time:'~2 min', blurb:'Claude proposes ideas per future; you shortlist.'},
     {key:'strategy', label:'Strategy', num:'05', time:'~1 min', blurb:'Claude sorts your picks into a strategy board.'}
   ];
   var STORAGE_KEY = 'futures-compass-state-v1';
@@ -556,6 +564,7 @@
         target.narrative = String((data && data.narrative) || target.narrative);
         target.signals = Array.isArray(data && data.signals) ? data.signals.map(String) : target.signals;
         target.critique = '';
+        target.image = '';
         markStale('futures');
       });
     });
@@ -784,12 +793,12 @@
     var box = el('div', {class:'welcome'});
     box.appendChild(el('h3', {}, 'Welcome — here’s how this works'));
     box.appendChild(el('p', {style:'font-size:.85rem; color:var(--ink-soft); margin:0;'},
-      'Five short stages, each ending with something for you to review and adjust before Claude moves on. Nothing advances without your click.'));
+      'Five short stages, each ending with something for you to review and adjust before Claude moves on. Nothing advances without your click. A full run, pictures included, makes roughly 15 Claude calls on your own account, and Claude will ask your permission the first time.'));
     box.appendChild(el('ol', {},
       el('li', {}, el('b',{},'Domain '), el('span',{class:'time'}, '(~2 min)'), ' — you describe the problem and horizon below, right now.'),
       el('li', {}, el('b',{},'Drivers '), el('span',{class:'time'}, '(~1-2 min)'), ' — Claude researches forces (10-30s), you rank and pick two as axes.'),
-      el('li', {}, el('b',{},'Futures '), el('span',{class:'time'}, '(~1 min)'), ' — Claude drafts four future stories (10-30s), you edit or challenge them.'),
-      el('li', {}, el('b',{},'Concepts '), el('span',{class:'time'}, '(~1 min)'), ' — Claude proposes ideas per future (10-30s), you shortlist a few.'),
+      el('li', {}, el('b',{},'Futures '), el('span',{class:'time'}, '(~2 min)'), ' — Claude drafts four future stories (10-30s) and can draw a picture of each; you edit or challenge them.'),
+      el('li', {}, el('b',{},'Concepts '), el('span',{class:'time'}, '(~2 min)'), ' — Claude proposes ideas per future (10-30s) and can sketch each one; you shortlist a few.'),
       el('li', {}, el('b',{},'Strategy '), el('span',{class:'time'}, '(~1 min)'), ' — Claude sorts your picks into a strategy board and tripwires.')
     ));
     box.appendChild(el('div', {class:'welcome-dismiss'},
@@ -951,6 +960,7 @@
       return wrap;
     }
 
+    if (!state.aiUnavailable) wrap.appendChild(artBar('fut'));
     var m = el('div', {class:'matrix'});
     var a = state.futures.axisA, b = state.futures.axisB;
     function place(node, col, row, colSpan, rowSpan){
@@ -990,6 +1000,7 @@
       );
     }
     var card = el('div', {class:'quad-card'},
+      (state.aiUnavailable && !q.image) ? null : artBox('fut', q),
       el('h4', {}, q.title),
       el('p', {}, q.narrative),
       el('div', {class:'signals'}, q.signals.map(function(s){ return el('span', {class:'signal-tag'}, s); }))
@@ -997,7 +1008,8 @@
     card.appendChild(el('div', {class:'card-actions'},
       el('button', {class:'btn ghost small', onclick: function(){ editingQuadrantId = q.id; render(); }}, 'Edit'),
       state.aiUnavailable ? null : el('button', {class:'btn ghost small', disabled: state.busy, onclick: function(){ regenerateQuadrant(q.id); }}, 'Regenerate'),
-      state.aiUnavailable ? null : el('button', {class:'btn ghost small', disabled: state.busy, onclick: function(){ challengeQuadrant(q.id); }}, 'Challenge plausibility')
+      state.aiUnavailable ? null : el('button', {class:'btn ghost small', disabled: state.busy, onclick: function(){ challengeQuadrant(q.id); }}, 'Challenge plausibility'),
+      state.aiUnavailable ? null : el('button', {class:'btn ghost small', disabled: state.busy, onclick: function(){ illustrateFutures(true, q.id); }}, q.image ? 'Redraw picture' : 'Draw picture')
     ));
     if (q.critique) card.appendChild(el('div', {class:'critique'}, el('b', {}, "Critic's note"), q.critique));
     return card;
@@ -1037,6 +1049,7 @@
       return wrap;
     }
 
+    if (!state.aiUnavailable) wrap.appendChild(artBar('con'));
     state.futures.quadrants.forEach(function(q){
       var cs = state.concepts.list.filter(function(c){ return c.scenarioId === q.id; });
       if (!cs.length) return;
@@ -1044,9 +1057,11 @@
       var grid = el('div', {class:'concept-grid'});
       cs.forEach(function(c){
         grid.appendChild(el('div', {class:'concept-card' + (c.shortlisted?' is-shortlisted':'')},
+          (state.aiUnavailable && !c.sketch) ? null : artBox('con', c),
           el('h5', {}, c.name),
           el('p', {}, c.pitch),
           el('p', {class:'why'}, c.whyThisWorld),
+          state.aiUnavailable ? null : el('button', {class:'btn ghost small', disabled: state.busy, onclick: function(id){ return function(){ sketchConcepts(true, id); }; }(c.id)}, c.sketch ? 'Redraw sketch' : 'Draw sketch'),
           el('label', {class:'shortlist-toggle'},
             el('input', {type:'checkbox', checked: c.shortlisted, onchange: function(id){ return function(){ toggleShortlist(id); }; }(c.id)}),
             'Shortlist for strategy'
@@ -1151,6 +1166,281 @@
     return box;
   }
 
+  // ---------- Drawn visuals (SVG made by Claude) ----------
+  // Claude can't paint pixels, but it can write vector art. Replies are parsed, stripped to an
+  // allow-list of shapes, recolored (palette for futures, black-and-white for sketches), and shown
+  // through <img> data URIs, so nothing the model writes can run as script.
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  var FUTURE_COLORS = ['#182027', '#f4f6ef', '#e2e7df', '#a9702a', '#e8d3af', '#285c63', '#c9dedc', '#3c6b49', '#cfe0ce', '#9c4030', '#ecd3cb'];
+  var SVG_TAGS = {svg:1, g:1, defs:1, path:1, rect:1, circle:1, ellipse:1, line:1, polyline:1, polygon:1, lineargradient:1, radialgradient:1, stop:1, clippath:1, text:1, tspan:1};
+  var SVG_ATTRS = {d:1, x:1, y:1, x1:1, y1:1, x2:1, y2:1, cx:1, cy:1, r:1, rx:1, ry:1, fx:1, fy:1, width:1, height:1, points:1, transform:1,
+    fill:1, stroke:1, 'stroke-width':1, 'stroke-linecap':1, 'stroke-linejoin':1, 'stroke-dasharray':1, 'stroke-dashoffset':1, 'stroke-miterlimit':1,
+    opacity:1, 'fill-opacity':1, 'stroke-opacity':1, 'fill-rule':1, 'clip-rule':1, 'clip-path':1, offset:1, 'stop-color':1, 'stop-opacity':1,
+    gradientunits:1, gradienttransform:1, spreadmethod:1, clippathunits:1, id:1, viewbox:1, preserveaspectratio:1, 'font-size':1, 'font-weight':1,
+    'text-anchor':1, 'dominant-baseline':1, dx:1, dy:1, xmlns:1};
+  var SVG_STYLE_PROPS = {fill:1, stroke:1, 'stop-color':1, 'stroke-width':1, 'stroke-linecap':1, 'stroke-linejoin':1, 'stroke-dasharray':1,
+    opacity:1, 'fill-opacity':1, 'stroke-opacity':1, 'stop-opacity':1, 'font-size':1, 'font-weight':1, 'text-anchor':1};
+  var SHAPE_TAGS = {path:1, rect:1, circle:1, ellipse:1, line:1, polyline:1, polygon:1, text:1};
+
+  var colorCtx = null;
+  function parseColor(v){
+    if (!colorCtx){ var cv = document.createElement('canvas'); cv.width = 1; cv.height = 1; colorCtx = cv.getContext('2d'); }
+    colorCtx.fillStyle = '#123456';
+    colorCtx.fillStyle = v;
+    var out = String(colorCtx.fillStyle).toLowerCase();
+    var m = out.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/);
+    if (m){
+      if (out === '#123456' && String(v).toLowerCase().replace(/\s/g, '') !== '#123456') return null;
+      return [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
+    }
+    m = out.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+    return m ? [+m[1], +m[2], +m[3]] : null;
+  }
+  function nearestPalette(rgb){
+    var best = FUTURE_COLORS[0], bestD = Infinity;
+    FUTURE_COLORS.forEach(function(h){
+      var r = parseInt(h.slice(1, 3), 16), g = parseInt(h.slice(3, 5), 16), b = parseInt(h.slice(5, 7), 16);
+      var d = (r - rgb[0]) * (r - rgb[0]) + (g - rgb[1]) * (g - rgb[1]) + (b - rgb[2]) * (b - rgb[2]);
+      if (d < bestD){ bestD = d; best = h; }
+    });
+    return best;
+  }
+  function mapPaint(v, mode, isStroke){
+    v = String(v).trim();
+    var low = v.toLowerCase();
+    if (low === 'none' || low === 'transparent') return 'none';
+    if (/^url\(/i.test(v)){
+      if (mode === 'sketch') return isStroke ? '#111111' : '#ffffff';
+      return /^url\(\s*['"]?#[\w-]+['"]?\s*\)$/i.test(v) ? v : (isStroke ? 'none' : '#e2e7df');
+    }
+    var rgb = low === 'currentcolor' ? [24, 32, 39] : parseColor(v);
+    if (!rgb) return mode === 'sketch' ? (isStroke ? '#111111' : '#ffffff') : '#182027';
+    if (mode === 'sketch'){
+      var lum = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+      if (isStroke) return lum < 140 ? '#111111' : '#ffffff';
+      return lum < 80 ? '#111111' : (lum < 215 ? '#e4e4e4' : '#ffffff');
+    }
+    return nearestPalette(rgb);
+  }
+  function cleanAttrs(node, mode){
+    var extra = {};
+    Array.prototype.slice.call(node.attributes).forEach(function(a){
+      var name = a.name, lname = name.toLowerCase(), val = a.value;
+      if (lname === 'style'){
+        node.removeAttribute(name);
+        val.split(';').forEach(function(decl){
+          var i = decl.indexOf(':');
+          if (i < 0) return;
+          var p = decl.slice(0, i).trim().toLowerCase();
+          if (SVG_STYLE_PROPS[p]) extra[p] = decl.slice(i + 1).trim();
+        });
+        return;
+      }
+      if (!SVG_ATTRS[lname] || /javascript:|data:|@import|expression\(/i.test(val)){ node.removeAttribute(name); return; }
+      if (/url\(/i.test(val) && !/^url\(\s*['"]?#[\w-]+['"]?\s*\)$/i.test(val)) node.removeAttribute(name);
+    });
+    Object.keys(extra).forEach(function(p){ if (!/url\(|javascript:|data:/i.test(extra[p]) || /^url\(\s*['"]?#/i.test(extra[p])) node.setAttribute(p, extra[p]); });
+    ['fill', 'stroke', 'stop-color'].forEach(function(p){
+      if (node.hasAttribute(p)) node.setAttribute(p, mapPaint(node.getAttribute(p), mode, p === 'stroke'));
+    });
+    node.removeAttribute('font-family');
+  }
+  function cleanTree(node, mode, counter){
+    Array.prototype.slice.call(node.children).forEach(function(ch){
+      var tag = ch.localName.toLowerCase();
+      var banned = !SVG_TAGS[tag] || (mode === 'sketch' && /gradient|^stop$/.test(tag)) || (mode === 'color' && (tag === 'text' || tag === 'tspan'));
+      if (banned){ node.removeChild(ch); return; }
+      cleanAttrs(ch, mode);
+      if (SHAPE_TAGS[tag]) counter.shapes++;
+      if (tag === 'text'){
+        ch.setAttribute('font-family', 'Helvetica, Arial, sans-serif');
+        if (!ch.hasAttribute('fill')) ch.setAttribute('fill', '#111111');
+      }
+      cleanTree(ch, mode, counter);
+    });
+  }
+  function svgEl(doc, name, attrs){
+    var n = doc.createElementNS(SVG_NS, name);
+    Object.keys(attrs).forEach(function(k){ n.setAttribute(k, attrs[k]); });
+    return n;
+  }
+  // mode: 'color' (futures, palette-locked) or 'sketch' (concepts, black and white with a hand-drawn wobble)
+  function cleanSvg(raw, mode){
+    var m = String(raw || '').match(/<svg[\s\S]*<\/svg>/i);
+    if (!m) throw new Error('The reply did not contain an SVG.');
+    var src = m[0];
+    if (src.length > 70000) throw new Error('The SVG was too large.');
+    src = src.replace(/&nbsp;/g, ' ').replace(/&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-f]+);)/gi, '&amp;');
+    if (!/<svg[^>]*\sxmlns\s*=/i.test(src)) src = src.replace(/<svg\b/i, '<svg xmlns="' + SVG_NS + '"');
+    var doc = new DOMParser().parseFromString(src, 'image/svg+xml');
+    var root = doc.documentElement;
+    if (!root || root.localName.toLowerCase() !== 'svg' || doc.getElementsByTagName('parsererror').length) throw new Error('The SVG was not valid.');
+
+    var dflt = mode === 'sketch' ? [480, 320] : [640, 400];
+    var vb = (root.getAttribute('viewBox') || '').trim().split(/[\s,]+/).map(Number);
+    if (vb.length !== 4 || vb.some(isNaN) || vb[2] <= 0 || vb[3] <= 0){
+      var w = parseFloat(root.getAttribute('width')), h = parseFloat(root.getAttribute('height'));
+      vb = (w > 0 && h > 0) ? [0, 0, w, h] : [0, 0, dflt[0], dflt[1]];
+    }
+    cleanAttrs(root, mode);
+    root.removeAttribute('width'); root.removeAttribute('height');
+    root.setAttribute('viewBox', vb.join(' '));
+    root.setAttribute('preserveAspectRatio', mode === 'sketch' ? 'xMidYMid meet' : 'xMidYMid slice');
+    var counter = {shapes: 0};
+    cleanTree(root, mode, counter);
+    if (counter.shapes < 3) throw new Error('The drawing was empty.');
+
+    var bg = svgEl(doc, 'rect', {x: vb[0], y: vb[1], width: vb[2], height: vb[3], fill: mode === 'sketch' ? '#ffffff' : '#e2e7df'});
+    if (mode === 'sketch'){
+      var filter = svgEl(doc, 'filter', {id: 'fc-rough', x: '-3%', y: '-3%', width: '106%', height: '106%'});
+      filter.appendChild(svgEl(doc, 'feTurbulence', {type: 'fractalNoise', baseFrequency: '0.03', numOctaves: '2', seed: '7', result: 'n'}));
+      filter.appendChild(svgEl(doc, 'feDisplacementMap', {'in': 'SourceGraphic', in2: 'n', scale: '3', xChannelSelector: 'R', yChannelSelector: 'G'}));
+      var defs = svgEl(doc, 'defs', {});
+      defs.appendChild(filter);
+      var g = svgEl(doc, 'g', {filter: 'url(#fc-rough)'});
+      while (root.firstChild) g.appendChild(root.firstChild);
+      root.appendChild(bg); root.appendChild(defs); root.appendChild(g);
+    } else {
+      root.insertBefore(bg, root.firstChild);
+    }
+    return new XMLSerializer().serializeToString(root);
+  }
+  function svgUrl(svg){ return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); }
+  function svgToPng(svg, w, h){
+    return new Promise(function(resolve, reject){
+      var img = new Image();
+      img.onload = function(){
+        try{
+          var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+          var cx = cv.getContext('2d');
+          cx.fillStyle = '#ffffff'; cx.fillRect(0, 0, w, h);
+          cx.drawImage(img, 0, 0, w, h);
+          resolve(cv.toDataURL('image/png'));
+        }catch(e){ reject(e); }
+      };
+      img.onerror = function(){ reject(new Error('Could not rasterize the drawing.')); };
+      img.src = svgUrl(svg.replace(/<svg\b/, '<svg width="' + w + '" height="' + h + '"'));
+    });
+  }
+
+  function buildFutureImagePrompt(q){
+    return "You are an editorial illustrator making one picture for a scenario-planning workshop. The picture should let people feel what living in this future is like.\n\n" +
+      domainBlock() + "\n\nTHE FUTURE\nTitle: " + q.title + "\nStory: " + q.narrative + "\n\n" +
+      "Draw ONE scene as an SVG. Pick a single concrete moment from the story (a place, an object, weather, light), not an abstract symbol. Build it in layers (background, midground, foreground) with a clear focal point and bold, simple, flat shapes, like a screenprint poster. No faces; small silhouettes are fine. Let color and light carry the emotional tone of this future.\n\n" +
+      "STRICT RULES\n" +
+      "- Reply with ONLY the SVG markup. It must start with <svg and end with </svg>. No code fences, no commentary.\n" +
+      "- Use viewBox=\"0 0 640 400\" and no width or height attributes.\n" +
+      "- Use ONLY these colors: #182027 (ink), #F4F6EF (paper), #E2E7DF (mist), #A9702A (brass), #E8D3AF (pale brass), #285C63 (teal), #C9DEDC (pale teal), #3C6B49 (moss), #CFE0CE (pale moss), #9C4030 (brick), #ECD3CB (pale brick).\n" +
+      "- Allowed elements: svg, g, defs, linearGradient, stop, rect, circle, ellipse, path, polygon, polyline, line. No text, images, filters, scripts, or external references.\n" +
+      "- Keep it under about 60 shapes and under 8,000 characters.";
+  }
+  function buildSketchPrompt(c){
+    return "You are a designer making a quick black-and-white napkin sketch to show a product concept in a workshop.\n\n" +
+      domainBlock() + "\n\nCONCEPT\nName: " + c.name + "\nPitch: " + c.pitch + "\nIt is designed for the future called \"" + quadTitleById(c.scenarioId) + "\".\n\n" +
+      "Sketch the idea the way a designer would on a whiteboard: a rough screen wireframe, a device or object, a storyboard panel, or a simple diagram, whichever shows it best. Add a few arrows and 2-4 short labels (3 words max each).\n\n" +
+      "STRICT RULES\n" +
+      "- Reply with ONLY the SVG markup. It must start with <svg and end with </svg>. No code fences, no commentary.\n" +
+      "- Use viewBox=\"0 0 480 320\" and no width or height attributes.\n" +
+      "- Black and white only: strokes #111111 with stroke-width 2 to 3, stroke-linecap round, stroke-linejoin round. Fills only none, #ffffff, or light grey #E4E4E4 (sparingly, for emphasis). No other colors, no gradients.\n" +
+      "- Allowed elements: svg, g, rect, circle, ellipse, path, line, polyline, polygon, text. Text: font-size 14 to 18, fill #111111.\n" +
+      "- Keep it simple: under 50 elements and under 6,000 characters. Leave a 16-unit margin around the drawing.";
+  }
+
+  // Runs worker(item) for each item, `limit` at a time. Per-item failures are counted; cancellation,
+  // rate limits, and missing permission stop the whole batch.
+  function runPool(items, limit, worker){
+    var next = 0, active = 0, failures = 0, fatal = null;
+    return new Promise(function(resolve){
+      function pump(){
+        while (!fatal && active < limit && next < items.length){
+          (function(item){
+            active++;
+            Promise.resolve().then(function(){ return worker(item); }).then(function(){}, function(e){
+              var code = e && e.code;
+              if (code === 'cancelled' || code === 'rate_limited' || code === 'session_expired' || PERMANENT_CODES[code]) fatal = fatal || e;
+              else failures++;
+            }).then(function(){ active--; pump(); });
+          })(items[next++]);
+        }
+        if (active === 0) resolve({failures: failures, fatal: fatal});
+      }
+      pump();
+    });
+  }
+
+  function artObject(kind, id){
+    var list = kind === 'fut' ? state.futures.quadrants : state.concepts.list;
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+    return null;
+  }
+  function fillArt(box, kind, obj){
+    box.innerHTML = '';
+    var svg = kind === 'fut' ? obj.image : obj.sketch;
+    if (svg){
+      box.appendChild(el('img', {src: svgUrl(svg), alt: (kind === 'fut' ? 'Illustration of the future “' + obj.title + '”' : 'Sketch of the concept “' + obj.name + '”')}));
+    } else {
+      box.appendChild(el('div', {class: 'art-empty'}, kind === 'fut' ? 'No picture yet' : 'No sketch yet'));
+    }
+  }
+  function artBox(kind, obj){
+    var box = el('div', {class: 'art' + (kind === 'con' ? ' sketch' : ''), id: 'art-' + kind + '-' + obj.id});
+    fillArt(box, kind, obj);
+    return box;
+  }
+  function paintArt(kind, id){
+    var box = document.getElementById('art-' + kind + '-' + id), obj = artObject(kind, id);
+    if (box && obj) fillArt(box, kind, obj);
+  }
+
+  function drawBatch(kind, targets, label){
+    captureNotes(kind === 'fut' ? 'futures' : 'concepts');
+    if (!targets.length) return;
+    withBusy(label, function(signal, onStream){
+      var total = targets.length, done = 0;
+      function tick(){
+        done++;
+        if (total > 1){
+          state.wireLabel = label + ' ' + done + ' of ' + total;
+          var l = document.getElementById('wire-label');
+          if (l) l.textContent = state.wireLabel;
+        }
+      }
+      return runPool(targets, 2, function(obj){
+        var prompt = kind === 'fut' ? buildFutureImagePrompt(obj) : buildSketchPrompt(obj);
+        return callSample({prompt: prompt, asJson: false, signal: signal, onStream: total === 1 ? onStream : null}).then(function(text){
+          var svg = cleanSvg(text, kind === 'fut' ? 'color' : 'sketch');
+          if (kind === 'fut') obj.image = svg; else obj.sketch = svg;
+          paintArt(kind, obj.id);
+          tick();
+        }, function(e){ tick(); throw e; });
+      }).then(function(res){
+        if (res.fatal) throw res.fatal;
+        if (res.failures) state.lastError = res.failures + ' of ' + total + ' drawings didn’t come out. Use “Redraw” on those cards to try again.';
+      });
+    });
+  }
+  function illustrateFutures(force, onlyId){
+    var targets = state.futures.quadrants.filter(function(q){ return onlyId ? q.id === onlyId : (force || !q.image); });
+    drawBatch('fut', targets, onlyId ? 'Redrawing the picture…' : 'Illustrating the futures…');
+  }
+  function sketchConcepts(force, onlyId){
+    var targets = state.concepts.list.filter(function(c){ return onlyId ? c.id === onlyId : (force || !c.sketch); });
+    drawBatch('con', targets, onlyId ? 'Redrawing the sketch…' : 'Sketching the concepts…');
+  }
+  function artBar(kind){
+    var objs = kind === 'fut' ? state.futures.quadrants : state.concepts.list;
+    var missing = objs.filter(function(o){ return !(kind === 'fut' ? o.image : o.sketch); }).length;
+    var calls = missing || objs.length;
+    var fn = kind === 'fut' ? illustrateFutures : sketchConcepts;
+    return el('div', {class: 'art-bar'},
+      el('p', {}, kind === 'fut'
+        ? 'Claude can draw one illustration per future, as vector art. Expect bold, simple scenes, not photographs. About ' + calls + ' Claude calls, 30-60 seconds.'
+        : 'Claude can sketch each concept in black and white, napkin style. Expect rough wireframes and diagrams. About ' + calls + ' Claude calls, 1-2 minutes.'),
+      el('button', {class: 'btn small', disabled: state.busy, onclick: function(){ fn(!missing); }},
+        missing ? (kind === 'fut' ? 'Illustrate the futures' : 'Sketch the concepts') : (kind === 'fut' ? 'Redraw all pictures' : 'Redraw all sketches'))
+    );
+  }
+
   // ---------- Discussion decks (.pptx) ----------
   var STAGE_LABEL = {domain:'Domain', drivers:'Drivers', futures:'Futures', concepts:'Concepts', strategy:'Strategy'};
   var STAGE_NUM = {domain:1, drivers:2, futures:3, concepts:4, strategy:5};
@@ -1237,7 +1527,18 @@
     return (a && b) ? [a.name, b.name] : null;
   }
 
-  function buildDeck(stage){
+  function buildDeckImages(stage){
+    var jobs = [];
+    if (stage === 'futures') state.futures.quadrants.forEach(function(q){ if (q.image) jobs.push(['f' + q.id, q.image, 1280, 800]); });
+    if (stage === 'concepts') state.concepts.list.forEach(function(c){ if (c.sketch) jobs.push(['c' + c.id, c.sketch, 960, 640]); });
+    var out = {};
+    return Promise.all(jobs.map(function(j){
+      return svgToPng(j[1], j[2], j[3]).then(function(png){ out[j[0]] = png; }, function(){});
+    })).then(function(){ return out; });
+  }
+
+  function buildDeck(stage, imgs){
+    imgs = imgs || {};
     return Promise.resolve().then(function(){
       var pptx = new window.PptxGenJS();
       var SHAPE = pptx.ShapeType;
@@ -1361,28 +1662,54 @@
           var x = colX[idx % 2], y = rowY[Math.floor(idx / 2)];
           rect(s, x, y, W, H, PAL.white, PAL.border);
           if (!q) return;
-          s.addText([
-            {text: clip(q.title, 60), options: {fontFace: FNT.display, fontSize: 18, bold: true, italic: true, color: PAL.ink, breakLine: true, paraSpaceAfter: 6}},
-            {text: clip(q.narrative, 330), options: {fontFace: FNT.body, fontSize: 12.5, color: PAL.soft}}
-          ], {x: x, y: y, w: W, h: H, valign: 'top', margin: [10, 14, 8, 14]});
+          if (imgs['f' + q.id]){
+            s.addImage({data: imgs['f' + q.id], x: x + 0.12, y: y + 0.12, w: 2.6, h: 1.625});
+            s.addText([
+              {text: clip(q.title, 50), options: {fontFace: FNT.display, fontSize: 15, bold: true, italic: true, color: PAL.ink, breakLine: true, paraSpaceAfter: 5}},
+              {text: clip(q.narrative, 175), options: {fontFace: FNT.body, fontSize: 11, color: PAL.soft}}
+            ], {x: x + 2.8, y: y, w: W - 2.9, h: H, valign: 'top', margin: [10, 6, 8, 6]});
+          } else {
+            s.addText([
+              {text: clip(q.title, 60), options: {fontFace: FNT.display, fontSize: 18, bold: true, italic: true, color: PAL.ink, breakLine: true, paraSpaceAfter: 6}},
+              {text: clip(q.narrative, 330), options: {fontFace: FNT.body, fontSize: 12.5, color: PAL.soft}}
+            ], {x: x, y: y, w: W, h: H, valign: 'top', margin: [10, 14, 8, 14]});
+          }
         });
         s.addNotes('Read the four titles aloud. Ask: which one did you NOT want to be true? That is usually the one worth the most discussion.');
 
         order.forEach(function(q, idx){
           if (!q) return;
           var fs = newSlide('Future ' + (idx + 1) + ' of 4   ·   ' + clip(q.axisAPole === 'high' ? f.axisA.poleHigh : f.axisA.poleLow, 30) + '  ×  ' + clip(q.axisBPole === 'high' ? f.axisB.poleHigh : f.axisB.poleLow, 30), q.title, 30);
-          fs.addText(clip(q.narrative, 760), {x: 0.6, y: 1.85, w: 7.5, h: 4.9, fontFace: FNT.body, fontSize: 18, color: PAL.ink, valign: 'top', margin: 0, lineSpacingMultiple: 1.15});
-          rect(fs, 8.5, 1.85, 4.2, 2.7, PAL.surface, PAL.border);
-          var sig = [{text: 'SIGNALS WE WOULD SEE FIRST', options: {fontFace: FNT.mono, fontSize: 10, bold: true, color: PAL.teal, charSpacing: 2, breakLine: true, paraSpaceAfter: 8}}];
-          (q.signals.length ? q.signals : ['(none listed)']).slice(0, 4).forEach(function(t){
-            sig.push({text: clip(t, 105), options: {fontFace: FNT.body, fontSize: 12.5, color: PAL.ink, bullet: true, breakLine: true, paraSpaceAfter: 6}});
-          });
-          fs.addText(sig, {x: 8.5, y: 1.85, w: 4.2, h: 2.7, valign: 'top', margin: [12, 14, 8, 14]});
-          if (q.critique){
-            rect(fs, 8.5, 4.75, 4.2, 2.0, PAL.vermSoft, PAL.verm);
-            fs.addText([{text: 'THE CRITIC SAYS', options: {fontFace: FNT.mono, fontSize: 10, bold: true, color: PAL.verm, charSpacing: 2, breakLine: true, paraSpaceAfter: 6}},
-                        {text: clip(q.critique, 300), options: {fontFace: FNT.body, fontSize: 12, color: PAL.ink}}],
-                       {x: 8.5, y: 4.75, w: 4.2, h: 2.0, valign: 'top', margin: [12, 14, 8, 14]});
+          var pic = imgs['f' + q.id];
+          if (pic){
+            fs.addImage({data: pic, x: 0.6, y: 1.85, w: 5.6, h: 3.5});
+            rect(fs, 0.6, 5.5, 5.6, 1.3, PAL.surface, PAL.border);
+            var sig2 = [{text: 'SIGNALS WE WOULD SEE FIRST', options: {fontFace: FNT.mono, fontSize: 9, bold: true, color: PAL.teal, charSpacing: 2, breakLine: true, paraSpaceAfter: 4}}];
+            (q.signals.length ? q.signals : ['(none listed)']).slice(0, 3).forEach(function(t){
+              sig2.push({text: clip(t, 78), options: {fontFace: FNT.body, fontSize: 11, color: PAL.ink, bullet: true, breakLine: true, paraSpaceAfter: 2}});
+            });
+            fs.addText(sig2, {x: 0.6, y: 5.5, w: 5.6, h: 1.3, valign: 'top', margin: [8, 12, 4, 12]});
+            fs.addText(clip(q.narrative, 620), {x: 6.55, y: 1.85, w: 6.15, h: q.critique ? 3.35 : 4.9, fontFace: FNT.body, fontSize: 15, color: PAL.ink, valign: 'top', margin: 0, lineSpacingMultiple: 1.1});
+            if (q.critique){
+              rect(fs, 6.55, 5.3, 6.15, 1.5, PAL.vermSoft, PAL.verm);
+              fs.addText([{text: 'THE CRITIC SAYS', options: {fontFace: FNT.mono, fontSize: 9, bold: true, color: PAL.verm, charSpacing: 2, breakLine: true, paraSpaceAfter: 3}},
+                          {text: clip(q.critique, 250), options: {fontFace: FNT.body, fontSize: 11, color: PAL.ink}}],
+                         {x: 6.55, y: 5.3, w: 6.15, h: 1.5, valign: 'top', margin: [8, 12, 4, 12]});
+            }
+          } else {
+            fs.addText(clip(q.narrative, 760), {x: 0.6, y: 1.85, w: 7.5, h: 4.9, fontFace: FNT.body, fontSize: 18, color: PAL.ink, valign: 'top', margin: 0, lineSpacingMultiple: 1.15});
+            rect(fs, 8.5, 1.85, 4.2, 2.7, PAL.surface, PAL.border);
+            var sig = [{text: 'SIGNALS WE WOULD SEE FIRST', options: {fontFace: FNT.mono, fontSize: 10, bold: true, color: PAL.teal, charSpacing: 2, breakLine: true, paraSpaceAfter: 8}}];
+            (q.signals.length ? q.signals : ['(none listed)']).slice(0, 4).forEach(function(t){
+              sig.push({text: clip(t, 105), options: {fontFace: FNT.body, fontSize: 12.5, color: PAL.ink, bullet: true, breakLine: true, paraSpaceAfter: 6}});
+            });
+            fs.addText(sig, {x: 8.5, y: 1.85, w: 4.2, h: 2.7, valign: 'top', margin: [12, 14, 8, 14]});
+            if (q.critique){
+              rect(fs, 8.5, 4.75, 4.2, 2.0, PAL.vermSoft, PAL.verm);
+              fs.addText([{text: 'THE CRITIC SAYS', options: {fontFace: FNT.mono, fontSize: 10, bold: true, color: PAL.verm, charSpacing: 2, breakLine: true, paraSpaceAfter: 6}},
+                          {text: clip(q.critique, 300), options: {fontFace: FNT.body, fontSize: 12, color: PAL.ink}}],
+                         {x: 8.5, y: 4.75, w: 4.2, h: 2.0, valign: 'top', margin: [12, 14, 8, 14]});
+            }
           }
         });
       }
@@ -1399,11 +1726,20 @@
               rect(s, x, y, w, h, PAL.white, PAL.border);
               rect(s, x, y, w, 0.34, c.shortlisted ? PAL.brass : PAL.surface, c.shortlisted ? PAL.brass : PAL.border);
               s.addText(c.shortlisted ? 'SHORTLISTED' : 'CONCEPT ' + (start + k + 1), {x: x + 0.14, y: y, w: w - 0.28, h: 0.34, valign: 'middle', fontFace: FNT.mono, fontSize: 9.5, bold: true, color: c.shortlisted ? PAL.white : PAL.muted, charSpacing: 2, margin: 0});
-              s.addText([
-                {text: clip(c.name, 70), options: {fontFace: FNT.body, fontSize: 18, bold: true, color: PAL.ink, breakLine: true, paraSpaceAfter: 10}},
-                {text: clip(c.pitch, 330), options: {fontFace: FNT.body, fontSize: 14, color: PAL.soft, breakLine: true, paraSpaceAfter: 10}},
-                {text: 'Why this world: ' + clip(c.whyThisWorld, 170), options: {fontFace: FNT.body, fontSize: 12, italic: true, color: PAL.muted}}
-              ], {x: x, y: y + 0.4, w: w, h: h - 0.4, valign: 'top', margin: [10, 14, 8, 14]});
+              if (imgs['c' + c.id]){
+                s.addImage({data: imgs['c' + c.id], x: x + 0.12, y: y + 0.46, w: 3.66, h: 2.44});
+                s.addText([
+                  {text: clip(c.name, 50), options: {fontFace: FNT.body, fontSize: 14, bold: true, color: PAL.ink, breakLine: true, paraSpaceAfter: 4}},
+                  {text: clip(c.pitch, 165), options: {fontFace: FNT.body, fontSize: 11, color: PAL.soft, breakLine: true, paraSpaceAfter: 4}},
+                  {text: 'Why this world: ' + clip(c.whyThisWorld, 95), options: {fontFace: FNT.body, fontSize: 9.5, italic: true, color: PAL.muted}}
+                ], {x: x, y: y + 2.95, w: w, h: h - 2.95, valign: 'top', margin: [4, 14, 6, 14]});
+              } else {
+                s.addText([
+                  {text: clip(c.name, 70), options: {fontFace: FNT.body, fontSize: 18, bold: true, color: PAL.ink, breakLine: true, paraSpaceAfter: 10}},
+                  {text: clip(c.pitch, 330), options: {fontFace: FNT.body, fontSize: 14, color: PAL.soft, breakLine: true, paraSpaceAfter: 10}},
+                  {text: 'Why this world: ' + clip(c.whyThisWorld, 170), options: {fontFace: FNT.body, fontSize: 12, italic: true, color: PAL.muted}}
+                ], {x: x, y: y + 0.4, w: w, h: h - 0.4, valign: 'top', margin: [10, 14, 8, 14]});
+              }
             });
           }
         });
@@ -1505,7 +1841,7 @@
     var btn = document.getElementById('deck-btn');
     if (btn) btn.disabled = true;
     setDeckStatus('Building the deck… this can take up to 30 seconds.');
-    buildDeck(stage).then(function(blob){
+    buildDeckImages(stage).then(function(imgs){ return buildDeck(stage, imgs); }).then(function(blob){
       return downloadsApi.save({filename: 'futures-compass-' + stage + '-' + slug(state.domain.problem) + '.pptx', data: blob});
     }).then(function(){
       setDeckStatus('Saved. Take it to the discussion, then come back and add what the group decided.');
