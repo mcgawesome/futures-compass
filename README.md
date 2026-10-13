@@ -9,7 +9,7 @@ Futures Compass walks a team through design-forward scenario planning in five st
 
 ## Setup
 
-1. Clone the repo: `git clone <repo-url>`
+1. Clone the repo: `git clone https://github.com/mcgawesome/futures-compass.git`
 2. Move into it: `cd futures-compass`
 3. Start Claude Code: `claude`
 
